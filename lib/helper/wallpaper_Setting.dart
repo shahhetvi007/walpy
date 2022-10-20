@@ -24,23 +24,25 @@ class WallpaperSetting {
   }
 
   Future<String> getImageUrl() async {
-    int index = Random().nextInt(5);
     await Firebase.initializeApp();
+
+    final CollectionReference _collectionReference =
+        FirebaseFirestore.instance.collection('wallpapers');
+    QuerySnapshot snapshot1 = await _collectionReference.get();
+
+    final data = snapshot1.docs.map((e) => e.id).toList();
+    final random = Random().nextInt(data.length);
+    print(data[random]);
+
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('wallpapers')
-        .doc('Anime')
+        .doc(data[random])
         .collection('images')
         .get();
-    // QuerySnapshot snapshot1 =
-    //     await FirebaseFirestore.instance.collection('wallpapers').get();
-    // print('size');
-    // print(snapshot1.size);
-    // int random = Random().nextInt(snapshot1.docs.length);
-    // print(random);
-    // String documentSnapshot = snapshot1.docs.elementAt(random).get('url');
-    // print(documentSnapshot);
+
+    int index = Random().nextInt(5);
+
     String imageUrl = snapshot.docs.elementAt(index).get('url');
-    // print(imageUrl);
     return imageUrl;
   }
 }
