@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   backgroundImage: NetworkImage(profileImage),
                   radius: 40,
                 ),
-                SizedBox(height: 5),
+                const SizedBox(height: 5),
                 Text(
                   username,
                   // style: TextStyle(color: colorWhite),
@@ -148,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               title: const Text('Auto Change Wallpaper'),
               onTap: () {},
-              trailing: Container(
+              trailing: SizedBox(
                 height: 20,
                 child: Transform.scale(
                   scale: .7,
@@ -226,11 +226,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               title: const Text('Interval'),
-              subtitle: const Text(
-                'Each wallpaper will last for ',
+              subtitle: Text(
+                'Each wallpaper will last for $interval',
                 style: TextStyle(fontSize: 12, color: grey),
               ),
-              onTap: () {},
+              onTap: showIntervalOptions,
             ),
             ListTile(
               title: const Text('Screen'),
@@ -252,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('Theme'),
               subtitle: Text(
                 theme,
-                style: TextStyle(fontSize: 12, color: grey),
+                style: const TextStyle(fontSize: 12, color: grey),
               ),
               onTap: showThemeOptions,
             )
@@ -354,21 +354,44 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> showIntervalOption() async {
-    interval = await showDialog(
+  // Future<void> showIntervalOption() async {
+  //   interval = await showDialog(
+  //       context: context,
+  //       builder: (ctx) {
+  //         return const SimpleDialog(
+  //           children: [
+  //             SimpleDialogOption(
+  //                 child: ListTile(
+  //                     // leading: Radio(
+  //                     //   value: '15 minutes',
+  //                     // ),
+  //                     ))
+  //           ],
+  //         );
+  //       });
+  // }
+
+  Future<void> showIntervalOptions() async {
+    await showDialog(
         context: context,
         builder: (ctx) {
-          return const SimpleDialog(
-            children: [
-              SimpleDialogOption(
-                  child: ListTile(
-                      // leading: Radio(
-                      //   value: '15 minutes',
-                      // ),
-                      ))
-            ],
+          return SimpleDialog(
+            title: const Text('Select Interval'),
+            children: List.generate(6, (index) {
+              return RadioListTile(
+                  value: intervals[index],
+                  groupValue: interval,
+                  title: Text(intervals[index]),
+                  onChanged: (value) {
+                    setState(() {
+                      interval = value.toString();
+                    });
+                    Navigator.pop(context);
+                  });
+            }),
           );
         });
+    // print(intervals[2]);
   }
 
   Future<void> showScreenOptions() async {
@@ -403,7 +426,8 @@ class _HomeScreenState extends State<HomeScreen> {
               TextButton(
                   style: ButtonStyle(
                       alignment: Alignment.centerRight,
-                      padding: MaterialStatePropertyAll(EdgeInsets.all(20))),
+                      padding:
+                          MaterialStateProperty.all(const EdgeInsets.all(20))),
                   onPressed: () {
                     Navigator.pop(context, screen);
                   },
@@ -416,6 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> showSourceOptions() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
     source = await showDialog(
         context: context,
         builder: (ctx) {
@@ -425,19 +450,22 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Favorite wallpapers'),
                 onPressed: () {
+                  preferences.setString('source', 'Favorites');
                   Navigator.pop(context, 'Favorite Wallpapers');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('Random wallpapers'),
                 onPressed: () {
+                  preferences.setString('source', 'Random');
                   Navigator.pop(context, 'Random Wallpapers');
                 },
               ),
               TextButton(
                   style: ButtonStyle(
                       alignment: Alignment.centerRight,
-                      padding: MaterialStatePropertyAll(EdgeInsets.all(20))),
+                      padding:
+                          MaterialStateProperty.all(const EdgeInsets.all(20))),
                   onPressed: () {
                     Navigator.pop(context, source);
                   },
@@ -460,7 +488,6 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Light'),
                 onPressed: () {
-                  // ThemeSettings().saveTheme('light');
                   MyApp.of(ctx)?.changeTheme(theme: ThemeMode.light);
                   Navigator.pop(context, 'Light');
                 },
@@ -468,7 +495,6 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Dark'),
                 onPressed: () {
-                  // ThemeSettings().saveTheme('dark');
                   MyApp.of(ctx)?.changeTheme(theme: ThemeMode.dark);
                   Navigator.pop(context, 'Dark');
                 },
@@ -476,7 +502,6 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('System'),
                 onPressed: () {
-                  // ThemeSettings().saveTheme('system');
                   MyApp.of(ctx)?.changeTheme(theme: ThemeMode.system);
                   Navigator.pop(context, 'System');
                 },
@@ -484,7 +509,8 @@ class _HomeScreenState extends State<HomeScreen> {
               TextButton(
                   style: ButtonStyle(
                       alignment: Alignment.centerRight,
-                      padding: MaterialStatePropertyAll(EdgeInsets.all(20))),
+                      padding:
+                          MaterialStateProperty.all(const EdgeInsets.all(20))),
                   onPressed: () {
                     Navigator.pop(context, theme);
                   },
@@ -495,30 +521,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
-  // saveTheme(String theme) async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   prefs.setString('theme', theme);
-  //   getTheme();
-  // }
-  //
-  // getTheme() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   String? th = prefs.getString('theme');
-  //   switch (th) {
-  //     case 'light':
-  //       theme = ThemeMode.light;
-  //       break;
-  //     case 'dark':
-  //       theme = ThemeMode.dark;
-  //       break;
-  //     case 'system':
-  //       theme = ThemeMode.system;
-  //       break;
-  //     default:
-  //       break;
-  //   }
-  //   setState(() {});
-  // }
+  final intervals = [
+    'Every 15 minutes',
+    'Every 30 minutes',
+    'Every 1 hour',
+    'Every 2 hours',
+    'Every 5 hours',
+    'Every 10 hours'
+  ];
 }
-
-// enum Interval { 15 minutes }

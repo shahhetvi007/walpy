@@ -79,22 +79,34 @@ class _MyAppState extends State<MyApp> {
                 fontWeight: FontWeight.bold,
               ))),
       darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          // primarySwatch: primaryWhite,
-          primaryColor: colorWhite,
-          backgroundColor: colorTheme,
-          appBarTheme: const AppBarTheme(
-              // backgroundColor: colorTheme,
-              iconTheme: IconThemeData(color: colorWhite),
-              elevation: 0,
-              titleTextStyle: TextStyle(
-                color: colorWhite,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              )),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            backgroundColor: colorWhite,
-          )),
+        brightness: Brightness.dark,
+        // primarySwatch: primaryWhite,
+        primaryColor: colorWhite,
+        backgroundColor: colorTheme,
+        appBarTheme: const AppBarTheme(
+            // backgroundColor: colorTheme,
+            iconTheme: IconThemeData(color: colorWhite),
+            elevation: 0,
+            titleTextStyle: TextStyle(
+              color: colorWhite,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            )),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: colorWhite,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all(colorWhite),
+          textStyle:
+              MaterialStateProperty.all(const TextStyle(color: colorWhite)),
+        )),
+        textButtonTheme: TextButtonThemeData(
+          style: ButtonStyle(
+              textStyle: MaterialStateProperty.all(
+                  const TextStyle(color: colorTheme))),
+        ),
+      ),
       themeMode: _theme,
       home: AuthHelper().user != null ? HomeScreen() : const SignInScreen(),
     );
