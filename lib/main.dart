@@ -13,8 +13,8 @@ const periodicTask = "periodicTask";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Workmanager().initialize(callbackDispatcher);
   await Firebase.initializeApp();
+  Workmanager().initialize(callbackDispatcher);
   runApp(const MyApp());
 }
 
@@ -69,6 +69,7 @@ class _MyAppState extends State<MyApp> {
           primarySwatch: primaryBlack,
           primaryColor: colorTheme,
           backgroundColor: colorWhite,
+          scaffoldBackgroundColor: colorWhite,
           appBarTheme: const AppBarTheme(
               backgroundColor: white1,
               iconTheme: IconThemeData(color: Colors.black),
@@ -77,12 +78,14 @@ class _MyAppState extends State<MyApp> {
                 color: colorTheme,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-              ))),
+              )),
+          textTheme: const TextTheme(titleLarge: TextStyle(color: colorWhite))),
       darkTheme: ThemeData(
-        brightness: Brightness.dark,
+        // brightness: Brightness.dark,
         // primarySwatch: primaryWhite,
         primaryColor: colorWhite,
         backgroundColor: colorTheme,
+        // scaffoldBackgroundColor: colorTheme,
         appBarTheme: const AppBarTheme(
             // backgroundColor: colorTheme,
             iconTheme: IconThemeData(color: colorWhite),
@@ -96,11 +99,16 @@ class _MyAppState extends State<MyApp> {
           backgroundColor: colorWhite,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(colorWhite),
-          textStyle:
-              MaterialStateProperty.all(const TextStyle(color: colorWhite)),
+            style: ElevatedButton.styleFrom(
+          textStyle: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+          backgroundColor: colorTheme,
+          onPrimary: colorWhite,
         )),
+        listTileTheme: const ListTileThemeData(
+          textColor: colorWhite,
+        ),
         textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
               textStyle: MaterialStateProperty.all(

@@ -1,13 +1,14 @@
-import 'dart:collection';
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:work_manager_demo/helper/firebase_helper.dart';
+import 'package:work_manager_demo/res/color_resources.dart';
 
 class AdminHomeScreen extends StatefulWidget {
-  const AdminHomeScreen({Key? key}) : super(key: key);
+  String? category;
+
+  AdminHomeScreen({this.category});
 
   @override
   State<AdminHomeScreen> createState() => _AdminHomeScreenState();
@@ -18,8 +19,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   final ImagePicker imagePicker = ImagePicker();
   List<XFile> imageFileList = [];
-  List<String> imageUrls = [];
-  final collectionRef = FirebaseFirestore.instance.collection('wallpapers');
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    categoryController.text = widget.category ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,34 +45,59 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 labelText: 'Category',
                 hintText: 'Enter category',
                 border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue)),
+                  borderSide: BorderSide(color: colorTheme),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: colorTheme),
+                ),
               ),
             ),
             const SizedBox(height: 20),
             // (imageFileList.isEmpty)
-            TextButton(
-              onPressed: selectImages,
-              child: const Text('Select images'),
-            ),
-            Flexible(
-                flex: 3,
-                fit: FlexFit.loose,
-                child: GridView.builder(
-                    itemCount: imageFileList.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
+            isLoading
+                ? const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(),
                     ),
-                    itemBuilder: (ctx, i) {
-                      return Image.file(
-                        File(imageFileList[i].path),
-                        fit: BoxFit.cover,
-                      );
-                    })),
+                  )
+                : Flexible(
+                    flex: 3,
+                    fit: FlexFit.loose,
+                    child: GridView.builder(
+                        itemCount: imageFileList.length + 1,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                        ),
+                        itemBuilder: (ctx, i) {
+                          return i == imageFileList.length
+                              ? GestureDetector(
+                                  onTap: selectImages,
+                                  child: addImageContainer())
+                              : Image.file(
+                                  File(imageFileList[i].path),
+                                  fit: BoxFit.cover,
+                                );
+                        }),
+                  ),
             ElevatedButton(
-                onPressed: uploadImages, child: Text('Upload images')),
+                onPressed: () async {
+                  setState(() {
+                    isLoading = true;
+                  });
+                  await FirebaseHelper()
+                      .uploadImages(imageFileList, categoryController.text)
+                      .then((value) {
+                    setState(() {
+                      isLoading = false;
+                      categoryController.text = '';
+                      imageFileList = [];
+                    });
+                  });
+                },
+                child: const Text('Upload images')),
           ],
         ),
       ),
@@ -74,78 +105,20 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   void selectImages() async {
-    final List<XFile>? selectedImages = await imagePicker.pickMultiImage();
-    if (selectedImages!.isNotEmpty) {
+    final List<XFile> selectedImages = await imagePicker.pickMultiImage();
+    if (selectedImages.isNotEmpty) {
       imageFileList.addAll(selectedImages);
     }
     setState(() {});
   }
 
-  Future<String> addPhotoToStorage(XFile image) async {
-    String fileName = image.path.split('/').last;
-    final firebaseStorage = FirebaseStorage.instance;
-    if (image.path.isNotEmpty) {
-      //Upload to Firebase
-      TaskSnapshot snapshot = await firebaseStorage
-          .ref()
-          .child('uploads/$fileName')
-          .putFile(File(image.path));
-      // print(await snapshot.ref.getDownloadURL());
-      return await snapshot.ref.getDownloadURL();
-    } else {
-      print('No Image Path Received');
-      return '';
-    }
+  Widget addImageContainer() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: colorTheme),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.add),
+    );
   }
-
-  Future getDownloadUrls() async {
-    for (var image in imageFileList) {
-      String url = await addPhotoToStorage(image);
-      imageUrls.add(url);
-      setState(() {});
-    }
-    print('urls');
-    print(imageUrls);
-  }
-
-  Future uploadImages() async {
-    await getDownloadUrls();
-    final doc =
-        await collectionRef.doc(capitalize(categoryController.text)).get();
-    final docRef = collectionRef.doc(capitalize(categoryController.text));
-    RegExp regExp = RegExp(r'.+(\/|%2F)(.+)\?.+');
-
-    for (String downloadUrl in imageUrls) {
-      //This Regex won't work if you remove ?alt...token
-      var matches = regExp.allMatches(downloadUrl);
-      var match = matches.elementAt(0);
-      String filename = Uri.decodeFull(match.group(2)!);
-      if (doc.exists) {
-        docRef
-            .collection('images')
-            .doc(filename)
-            .update({'url': downloadUrl}).then((_) {
-          print('Image uploaded');
-        });
-      } else {
-        Map<String, Object> dummyMap = HashMap<String, Object>();
-        await docRef.set(dummyMap);
-        docRef
-            .collection('images')
-            .doc(filename)
-            .set({'url': downloadUrl}).then((_) {
-          print('Image uploaded');
-        });
-      }
-    }
-    setState(() {
-      imageUrls = [];
-      imageFileList = [];
-      categoryController.text = '';
-    });
-  }
-
-  String capitalize(String s) => (s != null && s.length > 1)
-      ? s[0].toUpperCase() + s.substring(1)
-      : s.toUpperCase();
 }

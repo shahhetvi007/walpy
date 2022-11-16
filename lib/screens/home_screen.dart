@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:work_manager_demo/helper/auth_helper.dart';
 import 'package:work_manager_demo/res/color_resources.dart';
 import 'package:work_manager_demo/screens/admin_screens/admin_home_screen.dart';
+import 'package:work_manager_demo/screens/admin_screens/favorite_screen.dart';
 import 'package:work_manager_demo/widgets/category_tile.dart';
 import 'package:work_manager_demo/widgets/grid_item.dart';
 import 'package:workmanager/workmanager.dart';
@@ -35,18 +36,15 @@ class _HomeScreenState extends State<HomeScreen> {
   bool charging = false;
   bool idle = false;
   String interval = '';
-  String screen = 'Home and Lock Screen';
-  String source = 'Random Wallpapers';
-  String theme = 'System';
-
-  // ThemeMode theme = ThemeMode.system;
-  //
-  // get themeMode => theme;
+  String screen = '';
+  String source = 'Random wallpapers';
+  String theme = '';
+  Duration duration = const Duration(minutes: 15);
 
   @override
   void initState() {
     super.initState();
-    // isAutoChange = false;
+    getAllSettings();
     getAutoChange();
     getCategoryAndImage();
   }
@@ -62,66 +60,83 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Wallpaper',
+          'Walpy',
         ),
         centerTitle: true,
       ),
-      body: Container(
-        margin: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 80,
-              child: ListView.builder(
-                  itemCount: categories.length,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (ctx, index) {
-                    // getImageUrl(categories[index]);
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _currentIndex = index;
-                        });
-                      },
-                      child: CategoryTile(
-                        imageUrl: imageUrls.isNotEmpty
-                            ? imageUrls[index]
-                            : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
-                        category: categories[index],
-                      ),
-                    );
-                  }),
-            ),
-            Expanded(
-              child: categories.isNotEmpty
-                  ? StreamBuilder(
-                      stream: _collectionReference
-                          .doc(categories[_currentIndex])
-                          .collection('images')
-                          .snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<dynamic> snapshot) {
-                        return snapshot.hasData
-                            ? GridView.builder(
-                                itemCount: snapshot.data.docs.length,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 3,
-                                  crossAxisSpacing: 3,
-                                  childAspectRatio: itemWidth / itemHeight,
-                                ),
-                                itemBuilder: (ctx, index) {
-                                  return GridItem(
-                                      snapshot.data.docs[index]['url']);
-                                })
-                            : const Center(child: CircularProgressIndicator());
-                      })
-                  : const Center(child: CircularProgressIndicator()),
-            ),
-          ],
+      body: RefreshIndicator(
+        onRefresh: getCategoryAndImage,
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 80,
+                child: ListView.builder(
+                    itemCount: categories.length,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (ctx, index) {
+                      // getImageUrl(categories[index]);
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _currentIndex = index;
+                          });
+                        },
+                        child: CategoryTile(
+                          imageUrl: imageUrls.isNotEmpty
+                              ? imageUrls[index]
+                              : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
+                          category: categories[index],
+                        ),
+                      );
+                    }),
+              ),
+              Expanded(
+                child: categories.isNotEmpty
+                    ? StreamBuilder(
+                        stream: _collectionReference
+                            .doc(categories[_currentIndex])
+                            .collection('images')
+                            .snapshots(),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<dynamic> snapshot) {
+                          return snapshot.hasData
+                              ? GridView.builder(
+                                  itemCount: snapshot.data.docs.length + 1,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 3,
+                                    crossAxisSpacing: 3,
+                                    childAspectRatio: itemWidth / itemHeight,
+                                  ),
+                                  itemBuilder: (ctx, index) {
+                                    return index == snapshot.data.docs.length
+                                        ? GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (ctx) => AdminHomeScreen(
+                                                          category: _collectionReference
+                                                              .doc(categories[
+                                                                  _currentIndex])
+                                                              .id)));
+                                            },
+                                            child: addImageContainer())
+                                        : GridItem(
+                                            snapshot.data.docs[index]['url']);
+                                  })
+                              : const Center(
+                                  child: CircularProgressIndicator());
+                        })
+                    : const Center(child: CircularProgressIndicator()),
+              ),
+            ],
+          ),
         ),
       ),
       drawer: Drawer(
@@ -142,6 +157,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(email),
               ],
             )),
+            ListTile(
+              title: const Text('Favorites'),
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (ctx) => const FavoriteScreen()));
+              },
+            ),
             const ListTile(
               title: Text('Settings'),
             ),
@@ -228,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('Interval'),
               subtitle: Text(
                 'Each wallpaper will last for $interval',
-                style: TextStyle(fontSize: 12, color: grey),
+                style: const TextStyle(fontSize: 12, color: grey),
               ),
               onTap: showIntervalOptions,
             ),
@@ -254,15 +278,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 theme,
                 style: const TextStyle(fontSize: 12, color: grey),
               ),
-              onTap: showThemeOptions,
+              onTap: () => showThemeOptions(),
             )
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (ctx) => const AdminHomeScreen()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (ctx) => AdminHomeScreen()));
         },
         child: const Icon(
           Icons.add,
@@ -332,8 +356,23 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
+  getAllSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    interval = prefs.getString('interval') ?? 'every 15 minutes';
+    int val = prefs.getInt('screen') ?? 1;
+    if (val == 1) {
+      screen = 'Home Screen';
+    } else if (val == 2) {
+      screen = 'Lock Screen';
+    } else {
+      screen = 'Home and Lock Screen';
+    }
+    source = prefs.getString('source') ?? 'Random Wallpapers';
+    theme = prefs.getString('theme') ?? 'System';
+    setState(() {});
+  }
+
   autoChangeWallpaper() async {
-    // WallpaperSetting().buttonPressed(isAutoChange);
     await getAutoChange();
     print(isAutoChange);
     if (isAutoChange == false) {
@@ -344,34 +383,20 @@ class _HomeScreenState extends State<HomeScreen> {
       Workmanager().registerPeriodicTask(
         "2",
         periodicTask,
-        frequency: const Duration(minutes: 15),
+        frequency: duration,
         constraints: Constraints(
           networkType: NetworkType.connected,
           requiresCharging: charging,
           requiresDeviceIdle: idle,
         ),
       );
+      print('Duration');
+      print(duration.toString());
     }
   }
 
-  // Future<void> showIntervalOption() async {
-  //   interval = await showDialog(
-  //       context: context,
-  //       builder: (ctx) {
-  //         return const SimpleDialog(
-  //           children: [
-  //             SimpleDialogOption(
-  //                 child: ListTile(
-  //                     // leading: Radio(
-  //                     //   value: '15 minutes',
-  //                     // ),
-  //                     ))
-  //           ],
-  //         );
-  //       });
-  // }
-
   Future<void> showIntervalOptions() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     await showDialog(
         context: context,
         builder: (ctx) {
@@ -382,16 +407,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: intervals[index],
                   groupValue: interval,
                   title: Text(intervals[index]),
+                  // activeColor: colorRed,
+                  // selectedTileColor: colorRed,
+                  selected: true,
                   onChanged: (value) {
                     setState(() {
-                      interval = value.toString();
+                      interval = value.toString().toLowerCase();
+                      prefs.setString(
+                          'interval', value.toString().toLowerCase());
                     });
+                    getDuration();
+                    if (isAutoChange) autoChangeWallpaper();
                     Navigator.pop(context);
                   });
             }),
           );
         });
-    // print(intervals[2]);
+    print(interval);
   }
 
   Future<void> showScreenOptions() async {
@@ -406,6 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: const Text('Home Screen'),
                 onPressed: () {
                   prefs.setInt('screen', WallpaperManager.HOME_SCREEN);
+
                   Navigator.pop(context, 'Home Screen');
                 },
               ),
@@ -436,7 +469,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         });
     setState(() {});
-    autoChangeWallpaper();
+    if (isAutoChange) autoChangeWallpaper();
   }
 
   Future<void> showSourceOptions() async {
@@ -450,14 +483,14 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Favorite wallpapers'),
                 onPressed: () {
-                  preferences.setString('source', 'Favorites');
+                  preferences.setString('source', 'Favorite Wallpapers');
                   Navigator.pop(context, 'Favorite Wallpapers');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('Random wallpapers'),
                 onPressed: () {
-                  preferences.setString('source', 'Random');
+                  preferences.setString('source', 'Random Wallpapers');
                   Navigator.pop(context, 'Random Wallpapers');
                 },
               ),
@@ -474,11 +507,11 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         });
     setState(() {});
-    autoChangeWallpaper();
+    if (isAutoChange) autoChangeWallpaper();
   }
 
   Future<void> showThemeOptions() async {
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     theme = await showDialog(
         context: context,
         builder: (ctx) {
@@ -488,21 +521,24 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Light'),
                 onPressed: () {
-                  MyApp.of(ctx)?.changeTheme(theme: ThemeMode.light);
+                  // MyApp.of(ctx)?.changeTheme(theme: ThemeMode.light);
+                  prefs.setString('theme', 'Light');
                   Navigator.pop(context, 'Light');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('Dark'),
                 onPressed: () {
-                  MyApp.of(ctx)?.changeTheme(theme: ThemeMode.dark);
+                  // MyApp.of(ctx)?.changeTheme(theme: ThemeMode.dark);
+                  prefs.setString('theme', 'Dark');
                   Navigator.pop(context, 'Dark');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('System'),
                 onPressed: () {
-                  MyApp.of(ctx)?.changeTheme(theme: ThemeMode.system);
+                  // MyApp.of(ctx)?.changeTheme(theme: ThemeMode.system);
+                  prefs.setString('theme', 'System');
                   Navigator.pop(context, 'System');
                 },
               ),
@@ -521,6 +557,33 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
+  void getDuration() {
+    switch (interval) {
+      case 'every 15 minutes':
+        duration = const Duration(minutes: 15);
+        break;
+      case 'every 30 minutes':
+        duration = const Duration(minutes: 30);
+        break;
+      case 'every 1 hour':
+        duration = const Duration(hours: 1);
+        break;
+      case 'every 2 hours':
+        duration = const Duration(hours: 2);
+        break;
+      case 'every 5 hours':
+        duration = const Duration(hours: 5);
+        break;
+      case 'every 10 hours':
+        duration = const Duration(hours: 10);
+        break;
+      default:
+        duration = const Duration(minutes: 15);
+        break;
+    }
+    setState(() {});
+  }
+
   final intervals = [
     'Every 15 minutes',
     'Every 30 minutes',
@@ -529,4 +592,22 @@ class _HomeScreenState extends State<HomeScreen> {
     'Every 5 hours',
     'Every 10 hours'
   ];
+
+  Widget addImageContainer() {
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: colorTheme),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: const Icon(
+          Icons.add,
+          size: 40,
+        ),
+      ),
+    );
+  }
 }

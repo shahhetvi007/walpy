@@ -48,6 +48,8 @@ dependencies:
   flutter_wallpaper_manager: ^0.0.3
   fluttertoast: ^8.1.1
   shared_preferences: ^2.0.15
+  printing: ^5.9.3
+  http: ^0.13.5
 
 dev_dependencies:
   flutter_test:

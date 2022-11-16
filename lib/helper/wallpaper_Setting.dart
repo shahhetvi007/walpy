@@ -13,9 +13,9 @@ class WallpaperSetting {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int? screen = prefs.getInt('screen');
     print(screen);
-    String? source = prefs.getString('source');
+    String source = prefs.getString('source') ?? 'Random Wallpapers';
     String imageUrl;
-    if (source!.toLowerCase() == 'favorites') {
+    if (source == 'Favorite Wallpapers') {
       imageUrl = await getFavoriteImageUrl();
     } else {
       imageUrl = await getRandomImageUrl();
@@ -54,6 +54,8 @@ class WallpaperSetting {
   }
 
   Future<String> getFavoriteImageUrl() async {
+    await Firebase.initializeApp();
+
     final CollectionReference _collectionReference =
         FirebaseFirestore.instance.collection('favorites');
 
