@@ -1,10 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:work_manager_demo/helper/auth_helper.dart';
-import 'package:work_manager_demo/main.dart';
+import 'package:work_manager_demo/helper/validations.dart';
 import 'package:work_manager_demo/res/color_resources.dart';
 import 'package:work_manager_demo/screens/home_screen.dart';
 import 'package:work_manager_demo/screens/signup_screen.dart';
+import 'package:work_manager_demo/widgets/common_widgets.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
@@ -13,7 +14,7 @@ class SignInScreen extends StatefulWidget {
   State<SignInScreen> createState() => _SignInScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> {
+class _SignInScreenState extends State<SignInScreen> with InputValidationMixin {
   String email = '';
   String password = '';
 
@@ -22,67 +23,62 @@ class _SignInScreenState extends State<SignInScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(15.0),
+          padding: const EdgeInsets.all(25.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             // mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Sign In',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 30,
-                  color: colorTheme,
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
               const SizedBox(height: 30),
-              TextFormField(
+              commonTextFormField(
+                context: context,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value!.isEmpty) {
-                    return 'Please enter some text';
+                  if (isEmailValid(value!)) {
+                    return null;
                   }
-                  return null;
+                  return 'Please enter valid email';
                 },
-                onChanged: (val) {
+                onFieldSubmitted: (val) {
                   setState(() {
                     email = val;
                   });
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Enter your email',
-                  border: OutlineInputBorder(
-                      borderSide: BorderSide(color: colorTheme)),
-                ),
+                labelText: 'Email',
+                hintText: 'Enter your email',
               ),
               const SizedBox(height: 30),
-              TextFormField(
+              commonTextFormField(
+                context: context,
                 keyboardType: TextInputType.text,
                 obscureText: true,
-                onChanged: (value) {
+                onFieldSubmitted: (value) {
                   setState(() {
                     password = value;
                   });
                 },
                 validator: (value) {
                   if (value!.isEmpty) {
-                    return 'Please enter some text';
+                    return 'Password is empty';
                   }
                   return null;
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Enter password',
-                  border: OutlineInputBorder(
-                      borderSide: BorderSide(color: colorTheme)),
-                ),
+                labelText: 'Password',
+                hintText: 'Enter password',
               ),
               const SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(40),
+                  minimumSize: const Size.fromHeight(50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
                   signIn(context);
@@ -99,12 +95,11 @@ class _SignInScreenState extends State<SignInScreen> {
                       Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                              builder: (ctx) => const SignUpScreen()));
+                              builder: (ctx) => const SignUpScreen(Role.User)));
                     },
                     child: const Text(
                       ' Sign Up',
                       style: TextStyle(
-                        // color: Colors.blue,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -115,14 +110,13 @@ class _SignInScreenState extends State<SignInScreen> {
               RichText(
                 text: TextSpan(
                     text: 'Sign up as an ',
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
                     ),
                     children: [
                       TextSpan(
                           text: 'Admin',
                           style: const TextStyle(
-                            color: colorTheme,
                             fontWeight: FontWeight.bold,
                           ),
                           recognizer: TapGestureRecognizer()
@@ -130,7 +124,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (ctx) => const SignUpScreen()));
+                                      builder: (ctx) => const SignUpScreen(Role.Admin)));
                             })
                     ]),
               )
@@ -142,13 +136,13 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future signIn(BuildContext context) async {
-    await AuthHelper().signIn(email, password).then((value) {
+    await AuthHelper().signIn(email, password).then((value) async {
       if (value == null) {
+        await AuthHelper().isAdmin();
         Navigator.of(context)
-            .pushReplacement(MaterialPageRoute(builder: (ctx) => HomeScreen()));
+            .pushReplacement(MaterialPageRoute(builder: (ctx) => const HomeScreen()));
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(value)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
       }
     });
   }

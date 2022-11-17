@@ -41,14 +41,20 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               controller: categoryController,
               keyboardType: TextInputType.text,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Category',
                 hintText: 'Enter category',
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: colorTheme),
-                ),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: colorTheme),
+                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                  borderRadius: BorderRadius.circular(12.0),
                 ),
               ),
             ),
@@ -65,8 +71,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     fit: FlexFit.loose,
                     child: GridView.builder(
                         itemCount: imageFileList.length + 1,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
                           mainAxisSpacing: 10,
                           crossAxisSpacing: 10,
@@ -74,8 +79,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         itemBuilder: (ctx, i) {
                           return i == imageFileList.length
                               ? GestureDetector(
-                                  onTap: selectImages,
-                                  child: addImageContainer())
+                                  onTap: selectImages, child: addImageContainer())
                               : Image.file(
                                   File(imageFileList[i].path),
                                   fit: BoxFit.cover,
@@ -115,7 +119,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   Widget addImageContainer() {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: colorTheme),
+        border: Border.all(color: Theme.of(context).primaryColor),
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Icon(Icons.add),

@@ -45,15 +45,17 @@ class FirebaseHelper {
       var matches = regExp.allMatches(downloadUrl);
       var match = matches.elementAt(0);
       String filename = Uri.decodeFull(match.group(2)!);
-      print('exists');
-      print(doc.exists);
+      //if category is already present
       if (doc.exists) {
         docRef.collection('images').doc(filename).set({'url': downloadUrl}).then((_) {
           print('Image uploaded');
         });
       } else {
-        Map<String, Object> dummyMap = HashMap<String, Object>();
-        await docRef.set(dummyMap);
+        //if category does not exist
+        //we need to set an empty map as doc to the category doc to work as expected
+        //else firebase is not able to get that doc
+        Map<String, Object> emptyMap = HashMap<String, Object>();
+        await docRef.set(emptyMap);
         docRef.collection('images').doc(filename).set({'url': downloadUrl}).then((_) {
           print('Image uploaded');
         });

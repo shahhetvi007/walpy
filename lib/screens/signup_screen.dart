@@ -6,21 +6,24 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:work_manager_demo/helper/auth_helper.dart';
-import 'package:work_manager_demo/main.dart';
+import 'package:work_manager_demo/helper/validations.dart';
 import 'package:work_manager_demo/res/color_resources.dart';
 import 'package:work_manager_demo/screens/home_screen.dart';
 import 'package:work_manager_demo/screens/signin_screen.dart';
 import 'package:work_manager_demo/models/user_model.dart';
+import 'package:work_manager_demo/widgets/common_widgets.dart';
 import 'package:work_manager_demo/widgets/custom_radio_button.dart';
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+  const SignUpScreen(this.role, {Key? key}) : super(key: key);
+
+  final Role role;
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
   TextEditingController passwordController = TextEditingController();
 
   String email = '';
@@ -36,101 +39,99 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _firestore = FirebaseFirestore.instance;
 
   @override
+  void initState() {
+    roleSelectedValue = widget.role;
+    _isUserSelected = roleSelectedValue == Role.User ? true : false;
+    _isAdminSelected = roleSelectedValue == Role.Admin ? true : false;
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Sign Up',
-          style: TextStyle(
-            color: colorTheme,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        // centerTitle: true,
-        backgroundColor: appBarColor,
-        elevation: 0,
-      ),
       body: SingleChildScrollView(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(15.0),
+            padding: const EdgeInsets.all(25.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'New User? Sign Up',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
                 Align(alignment: Alignment.center, child: addProfile()),
                 const SizedBox(height: 20),
-                const Align(
+                Align(
                   alignment: Alignment.center,
                   child: Text(
                     'Add Profile Photo',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: Theme.of(context).primaryColor),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 30),
-                TextFormField(
-                  keyboardType: TextInputType.text,
+                commonTextFormField(
+                  context: context,
+                  hintText: 'Name',
+                  labelText: 'Name',
                   validator: (value) {
                     if (value!.isEmpty) {
                       return 'Please enter username';
                     }
                     return null;
                   },
-                  onChanged: (val) {
-                    // print(val);
+                  onFieldSubmitted: (val) {
                     setState(() {
                       username = val;
                     });
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'Enter your name',
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: colorTheme)),
-                  ),
                 ),
                 const SizedBox(height: 30),
-                TextFormField(
+                commonTextFormField(
+                  context: context,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'Please enter some text';
+                    if (isEmailValid(value!)) {
+                      return null;
                     }
-                    return null;
+                    return 'Please enter valid email';
                   },
-                  onChanged: (val) {
+                  onFieldSubmitted: (val) {
                     setState(() {
                       email = val;
                     });
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: colorTheme)),
-                  ),
+                  labelText: 'Email',
+                  hintText: 'Enter your email',
                 ),
                 const SizedBox(height: 30),
-                TextFormField(
+                commonTextFormField(
+                  context: context,
                   controller: passwordController,
                   keyboardType: TextInputType.text,
                   obscureText: true,
                   validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'Please enter some text';
+                    if (isPasswordValid(value!)) {
+                      return null;
                     }
-                    return null;
+                    return 'Please enter valid password';
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter password',
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: colorTheme)),
-                  ),
+                  labelText: 'Password',
+                  hintText: 'Enter password',
                 ),
                 const SizedBox(height: 30),
-                TextFormField(
+                commonTextFormField(
+                  context: context,
                   keyboardType: TextInputType.text,
                   validator: (value) {
                     if (value != passwordController.text) {
@@ -138,8 +139,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     }
                     return null;
                   },
-                  onChanged: (val) {
-                    // print(val);
+                  onFieldSubmitted: (val) {
                     if (val == passwordController.text) {
                       setState(() {
                         password = val;
@@ -147,12 +147,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     }
                   },
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    hintText: 'Confirm password',
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: colorTheme)),
-                  ),
+                  labelText: 'Confirm Password',
+                  hintText: 'Confirm password',
                 ),
                 const SizedBox(height: 30),
                 Row(
@@ -191,7 +187,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 30),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
+                    shape:
+                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    minimumSize: const Size.fromHeight(50),
                   ),
                   onPressed: () {
                     signUp(context);
@@ -205,15 +203,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const Text('Already have an account?'),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (ctx) => const SignInScreen()));
+                        Navigator.pushReplacement(context,
+                            MaterialPageRoute(builder: (ctx) => const SignInScreen()));
                       },
-                      child: const Text(
+                      child: Text(
                         ' Sign In',
                         style: TextStyle(
-                          color: colorTheme,
+                          color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -233,17 +229,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       onTap: _chooseImageSourceType,
       child: Stack(children: [
         Container(
-          height: 100,
-          width: 100,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: black1),
+          height: 120,
+          width: 120,
+          decoration: BoxDecoration(
+              shape: BoxShape.circle, color: Theme.of(context).primaryColor),
         ),
         (imagePicked != null)
             ? Container(
-                height: 100,
-                width: 100,
+                height: 120,
+                width: 120,
                 decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: black1,
                     image: DecorationImage(
                       image: FileImage(
                         imagePicked!,
@@ -251,15 +247,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       fit: BoxFit.fill,
                     )),
               )
-            : const Positioned(
+            : Positioned(
                 left: 0,
                 right: 0,
                 top: 0,
                 bottom: 0,
                 child: Icon(
                   Icons.person_add_alt_1_outlined,
-                  color: colorTheme,
-                  size: 40,
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  size: 32,
                 ),
               )
       ]),
@@ -334,10 +330,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       isAdmin: _isAdminSelected,
     );
     try {
-      await _firestore
-          .collection('users')
-          .doc(AuthHelper().user.uid)
-          .set(user.toMap());
+      await _firestore.collection('users').doc(AuthHelper().user.uid).set(user.toMap());
     } on FirebaseException catch (e) {
       print(e.message);
     }
@@ -348,12 +341,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final firebaseStorage = FirebaseStorage.instance;
     if (image != null) {
       //Upload to Firebase
-      var snapshot = await firebaseStorage
-          .ref()
-          .child('user_profiles/$fileName')
-          .putFile(image);
-      // .whenComplete(() {});
-      // .onComplete();
+      var snapshot =
+          await firebaseStorage.ref().child('user_profiles/$fileName').putFile(image);
       var downloadUrl = await snapshot.ref.getDownloadURL();
       if (!mounted) return;
       setState(() {
@@ -365,13 +354,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future signUp(BuildContext context) async {
-    await AuthHelper().signUp(email, password);
-    await uploadImage(imagePicked!);
-    await addUserToDb();
-    if (AuthHelper().user != null) {
-      Navigator.pushReplacement(
-          this.context, MaterialPageRoute(builder: (ctx) => HomeScreen()));
-    }
+    await AuthHelper().signUp(email, password).then((value) async {
+      if (value == null) {
+        if (imagePicked != null) {
+          print('imagePicked');
+          await uploadImage(imagePicked!);
+        }
+        if (AuthHelper().user != null) {
+          print('AuthHelper');
+          await addUserToDb();
+          await AuthHelper().isAdmin();
+          Navigator.pushReplacement(
+              this.context, MaterialPageRoute(builder: (ctx) => HomeScreen()));
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
+      }
+    }, onError: (err) {
+      print(err.toString());
+    });
   }
 }
 

@@ -26,19 +26,22 @@ class CustomRadioButton extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: Container(
         decoration: BoxDecoration(
-            color: isSelected ? black1 : Colors.white,
-            border: Border.all(color: isSelected ? colorTheme : Colors.grey),
-            borderRadius: BorderRadius.circular(8)),
+            color: isSelected ? Theme.of(context).primaryColor : colorWhite,
+            border: Border.all(
+                color: isSelected ? Theme.of(context).primaryColor : colorTheme),
+            borderRadius: BorderRadius.circular(12)),
         child: ListTile(
           title: Text(
             title,
             style: TextStyle(
-                color: isSelected ? colorTheme : Colors.grey,
+                color:
+                    isSelected ? Theme.of(context).scaffoldBackgroundColor : Colors.grey,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
           ),
           trailing: Radio(
               toggleable: true,
-              focusColor: colorTheme,
+              activeColor: Theme.of(context).primaryColor,
+              fillColor: MaterialStatePropertyAll<Color>(Colors.red),
               value: value,
               groupValue: groupValue,
               onChanged: onChanged),

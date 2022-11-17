@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:work_manager_demo/helper/auth_helper.dart';
+import 'package:work_manager_demo/helper/prefs_utils.dart';
 import 'package:work_manager_demo/res/color_resources.dart';
 import 'package:work_manager_demo/screens/detail_screen.dart';
 import 'package:work_manager_demo/screens/home_screen.dart';
@@ -22,10 +23,12 @@ class _GridItemState extends State<GridItem> with WidgetsBindingObserver {
       .doc(AuthHelper().user.uid)
       .collection('images');
   String filename = '';
+  bool isAdmin = false;
 
   @override
   void initState() {
     super.initState();
+    isAdmin = PreferenceUtils.getBool('isAdmin');
     checkIfFavorite();
     WidgetsBinding.instance.addObserver(this);
   }
@@ -85,17 +88,19 @@ class _GridItemState extends State<GridItem> with WidgetsBindingObserver {
             ),
           ),
         ),
-        Positioned(
-            bottom: 10,
-            right: 15,
-            child: IconButton(
-                icon: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? colorRed : colorWhite,
-                ),
-                onPressed: () {
-                  addFavorite(context);
-                })),
+        isAdmin
+            ? Container()
+            : Positioned(
+                bottom: 10,
+                right: 15,
+                child: IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? colorRed : colorWhite,
+                    ),
+                    onPressed: () {
+                      addFavorite(context);
+                    })),
       ],
     );
   }
@@ -104,8 +109,7 @@ class _GridItemState extends State<GridItem> with WidgetsBindingObserver {
     if (!mounted) return;
     checkIfFavorite();
     if (isFavorite) {
-      Navigator.pushReplacement(
-          ctx, MaterialPageRoute(builder: (ctx) => HomeScreen()));
+      Navigator.pushReplacement(ctx, MaterialPageRoute(builder: (ctx) => HomeScreen()));
       await collectionReference.doc(filename).delete();
     } else {
       await collectionReference.doc(filename).set({'url': widget.imageUrl});

@@ -1,8 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:work_manager_demo/helper/auth_helper.dart';
+import 'package:work_manager_demo/helper/prefs_utils.dart';
 import 'package:work_manager_demo/helper/wallpaper_Setting.dart';
-import 'package:work_manager_demo/models/common/globals.dart';
 import 'package:work_manager_demo/res/color_resources.dart';
 import 'package:work_manager_demo/screens/home_screen.dart';
 import 'package:work_manager_demo/screens/signin_screen.dart';
@@ -15,6 +15,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   Workmanager().initialize(callbackDispatcher);
+  await PreferenceUtils.init();
   runApp(const MyApp());
 }
 
@@ -59,93 +60,84 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  getTheme() {
+    String themeString = PreferenceUtils.getString('theme');
+    switch (themeString) {
+      case 'Light':
+        _theme = ThemeMode.light;
+        break;
+      case 'Dark':
+        _theme = ThemeMode.dark;
+        break;
+      case 'System':
+        _theme = ThemeMode.system;
+        break;
+      default:
+        _theme = ThemeMode.system;
+        break;
+    }
+  }
+
+  @override
+  void initState() {
+    getTheme();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    Globals.globalContext = context;
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-          brightness: Brightness.light,
-          primarySwatch: primaryBlack,
-          primaryColor: colorTheme,
-          backgroundColor: colorWhite,
-          scaffoldBackgroundColor: colorWhite,
-          appBarTheme: const AppBarTheme(
-              backgroundColor: white1,
-              iconTheme: IconThemeData(color: Colors.black),
-              elevation: 0,
-              titleTextStyle: TextStyle(
-                color: colorTheme,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              )),
-          textTheme: const TextTheme(titleLarge: TextStyle(color: colorWhite))),
-      darkTheme: ThemeData(
-        // brightness: Brightness.dark,
-        // primarySwatch: primaryWhite,
-        primaryColor: colorWhite,
-        backgroundColor: colorTheme,
-        // scaffoldBackgroundColor: colorTheme,
-        appBarTheme: const AppBarTheme(
-            // backgroundColor: colorTheme,
-            iconTheme: IconThemeData(color: colorWhite),
-            elevation: 0,
-            titleTextStyle: TextStyle(
-              color: colorWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            )),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: colorWhite,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-          textStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-          backgroundColor: colorTheme,
-          onPrimary: colorWhite,
-        )),
-        listTileTheme: const ListTileThemeData(
-          textColor: colorWhite,
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: ButtonStyle(
-              textStyle: MaterialStateProperty.all(
-                  const TextStyle(color: colorTheme))),
-        ),
-      ),
+      theme: lightTheme,
+      darkTheme: darkTheme,
       themeMode: _theme,
-      home: AuthHelper().user != null ? HomeScreen() : const SignInScreen(),
+      home: AuthHelper().user != null ? const HomeScreen() : const SignInScreen(),
     );
   }
-}
 
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({super.key, required this.title});
-//
-//   final String title;
-//
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
-//
-// class _MyHomePageState extends State<MyHomePage> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//           child: ElevatedButton(
-//         child: Text('Periodic task'),
-//         onPressed: () {
-//           Workmanager().cancelAll();
-//           Workmanager().registerPeriodicTask("2", periodicTask,
-//               frequency: Duration(minutes: 15));
-//         },
-//       )),
-//     );
-//   }
-// }
+  ThemeData darkTheme = ThemeData(
+      brightness: Brightness.dark,
+      primarySwatch: primaryWhite,
+      primaryColor: colorWhite,
+      backgroundColor: colorTheme,
+      scaffoldBackgroundColor: colorTheme,
+      appBarTheme: const AppBarTheme(
+          backgroundColor: colorTheme,
+          iconTheme: IconThemeData(color: colorWhite),
+          elevation: 0,
+          titleTextStyle: TextStyle(
+            color: colorWhite,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          )),
+      textTheme: const TextTheme(titleLarge: TextStyle(color: colorWhite)),
+      textButtonTheme:
+          TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: colorWhite)),
+      elevatedButtonTheme: const ElevatedButtonThemeData(
+          style: ButtonStyle(
+        backgroundColor: MaterialStatePropertyAll<Color>(colorWhite),
+        foregroundColor: MaterialStatePropertyAll<Color>(colorTheme),
+      )));
+
+  ThemeData lightTheme = ThemeData(
+    brightness: Brightness.light,
+    primarySwatch: primaryBlack,
+    primaryColor: colorTheme,
+    backgroundColor: colorWhite,
+    scaffoldBackgroundColor: colorWhite,
+    appBarTheme: const AppBarTheme(
+        backgroundColor: white1,
+        iconTheme: IconThemeData(color: Colors.black),
+        elevation: 0,
+        titleTextStyle: TextStyle(
+          color: colorTheme,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        )),
+    textTheme: const TextTheme(titleLarge: TextStyle(color: colorTheme)),
+    inputDecorationTheme: const InputDecorationTheme(
+        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: colorTheme)),
+        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: colorTheme)),
+        labelStyle: TextStyle(color: colorTheme)),
+  );
+}

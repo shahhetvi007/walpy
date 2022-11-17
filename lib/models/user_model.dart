@@ -2,14 +2,14 @@ class User {
   String id;
   String email;
   String username;
-  String photoUrl;
+  String? photoUrl;
   bool isAdmin;
 
   User(
       {required this.id,
       required this.email,
       required this.username,
-      required this.photoUrl,
+      this.photoUrl,
       this.isAdmin = false});
 
   factory User.fromMap(Map<String, dynamic> map) {

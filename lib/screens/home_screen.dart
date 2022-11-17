@@ -2,11 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_wallpaper_manager/flutter_wallpaper_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:work_manager_demo/helper/auth_helper.dart';
+import 'package:work_manager_demo/helper/prefs_utils.dart';
 import 'package:work_manager_demo/res/color_resources.dart';
 import 'package:work_manager_demo/screens/admin_screens/admin_home_screen.dart';
 import 'package:work_manager_demo/screens/admin_screens/favorite_screen.dart';
+import 'package:work_manager_demo/screens/signin_screen.dart';
 import 'package:work_manager_demo/widgets/category_tile.dart';
 import 'package:work_manager_demo/widgets/grid_item.dart';
 import 'package:workmanager/workmanager.dart';
@@ -14,7 +15,7 @@ import 'package:workmanager/workmanager.dart';
 import '../main.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -40,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String source = 'Random wallpapers';
   String theme = '';
   Duration duration = const Duration(minutes: 15);
+  bool isAdmin = false;
 
   @override
   void initState() {
@@ -67,31 +69,53 @@ class _HomeScreenState extends State<HomeScreen> {
       body: RefreshIndicator(
         onRefresh: getCategoryAndImage,
         child: Container(
-          margin: const EdgeInsets.all(8),
+          margin: EdgeInsets.all(size.width * 0.02),
           child: Column(
             children: [
               SizedBox(
-                height: 80,
+                height: size.height * 0.1,
                 child: ListView.builder(
-                    itemCount: categories.length,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                    itemCount: isAdmin ? categories.length + 1 : categories.length,
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
                     scrollDirection: Axis.horizontal,
                     itemBuilder: (ctx, index) {
                       // getImageUrl(categories[index]);
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _currentIndex = index;
-                          });
-                        },
-                        child: CategoryTile(
-                          imageUrl: imageUrls.isNotEmpty
-                              ? imageUrls[index]
-                              : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
-                          category: categories[index],
-                        ),
-                      );
+                      return index == 0
+                          ? GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (ctx) => AdminHomeScreen()));
+                              },
+                              child: Container(
+                                height: 50,
+                                width: 100,
+                                margin:
+                                    const EdgeInsets.only(left: 5, right: 5, bottom: 8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: colorTheme),
+                                  color: colorWhite,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 30,
+                                ),
+                              ))
+                          : GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _currentIndex = index - 1;
+                                });
+                              },
+                              child: CategoryTile(
+                                imageUrl: imageUrls.isNotEmpty
+                                    ? imageUrls[index - 1]
+                                    : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
+                                category: categories[index - 1],
+                              ),
+                            );
                     }),
               ),
               Expanded(
@@ -101,20 +125,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             .doc(categories[_currentIndex])
                             .collection('images')
                             .snapshots(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<dynamic> snapshot) {
+                        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
                           return snapshot.hasData
                               ? GridView.builder(
-                                  itemCount: snapshot.data.docs.length + 1,
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                  itemCount: isAdmin
+                                      ? snapshot.data.docs.length + 1
+                                      : snapshot.data.docs.length,
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
                                     mainAxisSpacing: 3,
                                     crossAxisSpacing: 3,
                                     childAspectRatio: itemWidth / itemHeight,
                                   ),
                                   itemBuilder: (ctx, index) {
-                                    return index == snapshot.data.docs.length
+                                    return index == 0
                                         ? GestureDetector(
                                             onTap: () {
                                               Navigator.push(
@@ -127,11 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                                               .id)));
                                             },
                                             child: addImageContainer())
-                                        : GridItem(
-                                            snapshot.data.docs[index]['url']);
+                                        : GridItem(snapshot.data.docs[index - 1]['url']);
                                   })
-                              : const Center(
-                                  child: CircularProgressIndicator());
+                              : const Center(child: CircularProgressIndicator());
                         })
                     : const Center(child: CircularProgressIndicator()),
               ),
@@ -139,161 +161,202 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            DrawerHeader(
-                child: Column(
-              children: [
-                CircleAvatar(
-                  backgroundImage: NetworkImage(profileImage),
-                  radius: 40,
+      drawer: drawer(),
+    );
+  }
+
+  Widget drawer() {
+    return Drawer(
+      child: ListView(
+        children: [
+          DrawerHeader(
+              child: Column(
+            children: [
+              CircleAvatar(
+                backgroundImage: NetworkImage(profileImage),
+                radius: 40,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                username,
+                // style: TextStyle(color: colorWhite),
+              ),
+              Text(email),
+            ],
+          )),
+          const ListTile(
+            title: Text(
+              'Settings',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ListTile(
+            title: const Text(
+              'Auto Change Wallpaper',
+              style: TextStyle(fontSize: 14),
+            ),
+            onTap: () {},
+            trailing: SizedBox(
+              height: 20,
+              child: Transform.scale(
+                scale: .7,
+                child: CupertinoSwitch(
+                  value: isAutoChange,
+                  onChanged: (value) {
+                    toggleSwitch(value);
+                  },
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  username,
-                  // style: TextStyle(color: colorWhite),
-                ),
-                Text(email),
-              ],
-            )),
-            ListTile(
-              title: const Text('Favorites'),
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (ctx) => const FavoriteScreen()));
-              },
-            ),
-            const ListTile(
-              title: Text('Settings'),
-            ),
-            ListTile(
-              title: const Text('Auto Change Wallpaper'),
-              onTap: () {},
-              trailing: SizedBox(
-                height: 20,
-                child: Transform.scale(
-                  scale: .7,
-                  child: CupertinoSwitch(
-                    value: isAutoChange,
-                    onChanged: (value) {
-                      toggleSwitch(value);
-                    },
-                  ),
-                ),
               ),
             ),
-            const Divider(),
-            const ListTile(
-              title: Text('Conditions'),
+          ),
+          const Divider(),
+          const ListTile(
+            title: Text(
+              'Conditions',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
-            ListTile(
-              title: const Text('On Wi-fi'),
-              subtitle: const Text(
-                'Device must be connected to a Wifi-network.',
-                style: TextStyle(fontSize: 12, color: grey),
-              ),
-              trailing: Checkbox(
-                value: onWifi,
-                onChanged: isAutoChange
-                    ? (value) {
-                        setState(() {
-                          onWifi = value!;
-                        });
-                      }
-                    : null,
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+          ),
+          ListTile(
+            title: const Text('On Wi-fi'),
+            subtitle: const Text(
+              'Device must be connected to a Wifi-network.',
+              style: TextStyle(fontSize: 12, color: grey),
             ),
-            ListTile(
-              title: const Text('Charging'),
-              subtitle: const Text(
-                'Device must be connected to a power source.',
-                style: TextStyle(fontSize: 12, color: grey),
-              ),
-              trailing: Checkbox(
-                value: charging,
-                onChanged: isAutoChange
-                    ? (value) {
-                        setState(() {
-                          charging = value!;
-                        });
-                        autoChangeWallpaper();
-                      }
-                    : null,
-              ),
+            trailing: Checkbox(
+              value: onWifi,
+              onChanged: isAutoChange
+                  ? (value) {
+                      setState(() {
+                        onWifi = value!;
+                      });
+                    }
+                  : null,
             ),
-            ListTile(
-              title: const Text('Idle'),
-              subtitle: const Text(
-                'Device must be inactive.',
-                style: TextStyle(fontSize: 12, color: grey),
-              ),
-              trailing: Checkbox(
-                value: idle,
-                onChanged: isAutoChange
-                    ? (value) {
-                        setState(() {
-                          idle = value!;
-                        });
-                        autoChangeWallpaper();
-                      }
-                    : null,
-              ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+          ),
+          ListTile(
+            title: const Text('Charging'),
+            subtitle: const Text(
+              'Device must be connected to a power source.',
+              style: TextStyle(fontSize: 12, color: grey),
             ),
-            const Divider(),
-            const ListTile(
-              title: Text('Options'),
+            trailing: Checkbox(
+              value: charging,
+              onChanged: isAutoChange
+                  ? (value) {
+                      setState(() {
+                        charging = value!;
+                      });
+                      autoChangeWallpaper();
+                    }
+                  : null,
             ),
-            ListTile(
-              title: const Text('Interval'),
-              subtitle: Text(
-                'Each wallpaper will last for $interval',
-                style: const TextStyle(fontSize: 12, color: grey),
-              ),
-              onTap: showIntervalOptions,
+          ),
+          ListTile(
+            title: const Text('Idle'),
+            subtitle: const Text(
+              'Device must be inactive.',
+              style: TextStyle(fontSize: 12, color: grey),
             ),
-            ListTile(
-              title: const Text('Screen'),
-              subtitle: Text(
-                screen,
-                style: const TextStyle(fontSize: 12, color: grey),
-              ),
-              onTap: showScreenOptions,
+            trailing: Checkbox(
+              value: idle,
+              onChanged: isAutoChange
+                  ? (value) {
+                      setState(() {
+                        idle = value!;
+                      });
+                      autoChangeWallpaper();
+                    }
+                  : null,
             ),
-            ListTile(
-              title: const Text('Source'),
-              subtitle: Text(
-                source,
-                style: const TextStyle(fontSize: 12, color: grey),
-              ),
-              onTap: showSourceOptions,
+          ),
+          const Divider(),
+          const ListTile(
+            title: Text(
+              'Options',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
-            ListTile(
-              title: const Text('Theme'),
-              subtitle: Text(
-                theme,
-                style: const TextStyle(fontSize: 12, color: grey),
-              ),
-              onTap: () => showThemeOptions(),
-            )
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (ctx) => AdminHomeScreen()));
-        },
-        child: const Icon(
-          Icons.add,
-          size: 30,
-        ),
+          ),
+          ListTile(
+            title: const Text('Interval'),
+            subtitle: Text(
+              'Each wallpaper will last for $interval',
+              style: const TextStyle(fontSize: 12, color: grey),
+            ),
+            onTap: showIntervalOptions,
+          ),
+          ListTile(
+            title: const Text('Screen'),
+            subtitle: Text(
+              screen,
+              style: const TextStyle(fontSize: 12, color: grey),
+            ),
+            onTap: showScreenOptions,
+          ),
+          ListTile(
+            title: const Text('Source'),
+            subtitle: Text(
+              source,
+              style: const TextStyle(fontSize: 12, color: grey),
+            ),
+            onTap: showSourceOptions,
+          ),
+          ListTile(
+            title: const Text('Theme'),
+            subtitle: Text(
+              theme,
+              style: const TextStyle(fontSize: 12, color: grey),
+            ),
+            onTap: () => showThemeOptions(),
+          ),
+          const Divider(),
+          ListTile(
+            title: const Text(
+              'Favorites',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            onTap: () {
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (ctx) => const FavoriteScreen()));
+            },
+          ),
+          ListTile(
+            title: const Text(
+              'Logout',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            onTap: logout,
+          ),
+        ],
       ),
     );
+  }
+
+  logout() {
+    showDialog(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                  onPressed: () async {
+                    await AuthHelper().signOut().then((val) {
+                      print('signed out');
+                      print(AuthHelper().user);
+                      Navigator.pushReplacement(context,
+                          MaterialPageRoute(builder: (ctx) => const SignInScreen()));
+                    });
+                  },
+                  child: const Text('Yes')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel')),
+            ],
+          );
+        });
   }
 
   Future getCategories() async {
@@ -307,11 +370,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> getImageUrl() async {
     if (categories.isNotEmpty) {
       for (var category in categories) {
-        Stream<QuerySnapshot> snapshot = _collectionReference
-            .doc(category)
-            .collection('images')
-            .limit(1)
-            .snapshots();
+        Stream<QuerySnapshot> snapshot =
+            _collectionReference.doc(category).collection('images').limit(1).snapshots();
         snapshot.forEach((element) {
           element.docs.asMap().forEach((key, value) {
             imageUrls.add(element.docs.first.get('url'));
@@ -345,21 +405,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   toggleSwitch(bool value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isAutoChanges', value);
+    print(value);
+    PreferenceUtils.setBool('isAutoChanges', value);
     autoChangeWallpaper();
   }
 
   getAutoChange() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    isAutoChange = prefs.getBool('isAutoChanges') ?? false;
+    isAutoChange = PreferenceUtils.getBool('isAutoChanges', false);
     setState(() {});
   }
 
-  getAllSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    interval = prefs.getString('interval') ?? 'every 15 minutes';
-    int val = prefs.getInt('screen') ?? 1;
+  getAllSettings() {
+    interval = PreferenceUtils.getString('interval', 'every 15 minutes');
+    int val = PreferenceUtils.getInt('screen', 1);
     if (val == 1) {
       screen = 'Home Screen';
     } else if (val == 2) {
@@ -367,9 +425,10 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       screen = 'Home and Lock Screen';
     }
-    source = prefs.getString('source') ?? 'Random Wallpapers';
-    theme = prefs.getString('theme') ?? 'System';
+    source = PreferenceUtils.getString('source', 'Random Wallpapers');
+    theme = PreferenceUtils.getString('theme', 'System');
     setState(() {});
+    isAdmin = PreferenceUtils.getBool('isAdmin');
   }
 
   autoChangeWallpaper() async {
@@ -396,7 +455,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> showIntervalOptions() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     await showDialog(
         context: context,
         builder: (ctx) {
@@ -407,13 +465,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: intervals[index],
                   groupValue: interval,
                   title: Text(intervals[index]),
-                  // activeColor: colorRed,
-                  // selectedTileColor: colorRed,
                   selected: true,
                   onChanged: (value) {
+                    print(value);
                     setState(() {
-                      interval = value.toString().toLowerCase();
-                      prefs.setString(
+                      interval = value.toString();
+                      PreferenceUtils.setString(
                           'interval', value.toString().toLowerCase());
                     });
                     getDuration();
@@ -423,11 +480,10 @@ class _HomeScreenState extends State<HomeScreen> {
             }),
           );
         });
-    print(interval);
+    // print(interval);
   }
 
   Future<void> showScreenOptions() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     screen = await showDialog(
         context: context,
         builder: (ctx) {
@@ -437,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Home Screen'),
                 onPressed: () {
-                  prefs.setInt('screen', WallpaperManager.HOME_SCREEN);
+                  PreferenceUtils.setInt('screen', WallpaperManager.HOME_SCREEN);
 
                   Navigator.pop(context, 'Home Screen');
                 },
@@ -445,22 +501,21 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Lock Screen'),
                 onPressed: () {
-                  prefs.setInt('screen', WallpaperManager.LOCK_SCREEN);
+                  PreferenceUtils.setInt('screen', WallpaperManager.LOCK_SCREEN);
                   Navigator.pop(context, 'Lock Screen');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('Both'),
                 onPressed: () {
-                  prefs.setInt('screen', WallpaperManager.BOTH_SCREEN);
+                  PreferenceUtils.setInt('screen', WallpaperManager.BOTH_SCREEN);
                   Navigator.pop(context, 'Home and Lock Screen');
                 },
               ),
               TextButton(
                   style: ButtonStyle(
                       alignment: Alignment.centerRight,
-                      padding:
-                          MaterialStateProperty.all(const EdgeInsets.all(20))),
+                      padding: MaterialStateProperty.all(const EdgeInsets.all(20))),
                   onPressed: () {
                     Navigator.pop(context, screen);
                   },
@@ -473,7 +528,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> showSourceOptions() async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
     source = await showDialog(
         context: context,
         builder: (ctx) {
@@ -483,22 +537,21 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Favorite wallpapers'),
                 onPressed: () {
-                  preferences.setString('source', 'Favorite Wallpapers');
+                  PreferenceUtils.setString('source', 'Favorite Wallpapers');
                   Navigator.pop(context, 'Favorite Wallpapers');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('Random wallpapers'),
                 onPressed: () {
-                  preferences.setString('source', 'Random Wallpapers');
+                  PreferenceUtils.setString('source', 'Random Wallpapers');
                   Navigator.pop(context, 'Random Wallpapers');
                 },
               ),
               TextButton(
                   style: ButtonStyle(
                       alignment: Alignment.centerRight,
-                      padding:
-                          MaterialStateProperty.all(const EdgeInsets.all(20))),
+                      padding: MaterialStateProperty.all(const EdgeInsets.all(20))),
                   onPressed: () {
                     Navigator.pop(context, source);
                   },
@@ -511,7 +564,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> showThemeOptions() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     theme = await showDialog(
         context: context,
         builder: (ctx) {
@@ -521,32 +573,31 @@ class _HomeScreenState extends State<HomeScreen> {
               SimpleDialogOption(
                 child: const Text('Light'),
                 onPressed: () {
-                  // MyApp.of(ctx)?.changeTheme(theme: ThemeMode.light);
-                  prefs.setString('theme', 'Light');
+                  MyApp.of(ctx)?.changeTheme(theme: ThemeMode.light);
+                  PreferenceUtils.setString('theme', 'Light');
                   Navigator.pop(context, 'Light');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('Dark'),
                 onPressed: () {
-                  // MyApp.of(ctx)?.changeTheme(theme: ThemeMode.dark);
-                  prefs.setString('theme', 'Dark');
+                  MyApp.of(ctx)?.changeTheme(theme: ThemeMode.dark);
+                  PreferenceUtils.setString('theme', 'Dark');
                   Navigator.pop(context, 'Dark');
                 },
               ),
               SimpleDialogOption(
                 child: const Text('System'),
                 onPressed: () {
-                  // MyApp.of(ctx)?.changeTheme(theme: ThemeMode.system);
-                  prefs.setString('theme', 'System');
+                  MyApp.of(ctx)?.changeTheme(theme: ThemeMode.system);
+                  PreferenceUtils.setString('theme', 'System');
                   Navigator.pop(context, 'System');
                 },
               ),
               TextButton(
                   style: ButtonStyle(
                       alignment: Alignment.centerRight,
-                      padding:
-                          MaterialStateProperty.all(const EdgeInsets.all(20))),
+                      padding: MaterialStateProperty.all(const EdgeInsets.all(20))),
                   onPressed: () {
                     Navigator.pop(context, theme);
                   },
@@ -595,14 +646,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget addImageContainer() {
     return Card(
-      elevation: 5,
+      elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          border: Border.all(color: colorTheme),
-          borderRadius: BorderRadius.circular(15),
-        ),
+            border: Border.all(color: colorTheme),
+            borderRadius: BorderRadius.circular(15),
+            color: colorWhite),
         child: const Icon(
           Icons.add,
           size: 40,
