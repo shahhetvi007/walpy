@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:work_manager_demo/helper/prefs_utils.dart';
 
-const colorTheme = Color(0xff343434);
 const colorWhite = Color(0xffe6e6e6);
+const colorBlack = Colors.black;
+final colorTheme =
+    PreferenceUtils.getString('theme') == 'Light' ? colorBlack : colorWhite;
 const colorRed = Colors.red;
 const appBarColor = Colors.white60;
 const black1 = Colors.black12;
 const white1 = Colors.white60;
 const grey = Colors.grey;
+
+const lightestPink = Color(0xffD8CBFF);
+
+// const primaryGradient =
+//     LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [
+//   Color(0xffab91ff),
+//   Color(0xfffa5dc7),
+//   Color(0xff68ddff),
+// ]);
 
 const MaterialColor primaryBlack = MaterialColor(
   _blackPrimaryValue,

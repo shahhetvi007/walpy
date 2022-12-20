@@ -32,29 +32,43 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
+        // iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            TextField(
-              controller: categoryController,
-              keyboardType: TextInputType.text,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: 'Category',
-                hintText: 'Enter category',
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  borderRadius: BorderRadius.circular(12.0),
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                // gradient: primaryGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: TextField(
+                  controller: categoryController,
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: const TextStyle(fontFamily: 'Jost'),
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    hintText: 'Enter category',
+                    labelStyle: const TextStyle(fontFamily: 'Jost'),
+                    hintStyle: const TextStyle(fontFamily: 'Jost'),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -80,28 +94,45 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                           return i == imageFileList.length
                               ? GestureDetector(
                                   onTap: selectImages, child: addImageContainer())
-                              : Image.file(
-                                  File(imageFileList[i].path),
-                                  fit: BoxFit.cover,
+                              : Container(
+                                  child: Image.file(
+                                    File(imageFileList[i].path),
+                                    fit: BoxFit.cover,
+                                  ),
                                 );
                         }),
                   ),
-            ElevatedButton(
-                onPressed: () async {
+            GestureDetector(
+              onTap: () async {
+                setState(() {
+                  isLoading = true;
+                });
+                await FirebaseHelper()
+                    .uploadImages(imageFileList, categoryController.text)
+                    .then((value) {
                   setState(() {
-                    isLoading = true;
+                    isLoading = false;
+                    categoryController.text = '';
+                    imageFileList = [];
                   });
-                  await FirebaseHelper()
-                      .uploadImages(imageFileList, categoryController.text)
-                      .then((value) {
-                    setState(() {
-                      isLoading = false;
-                      categoryController.text = '';
-                      imageFileList = [];
-                    });
-                  });
-                },
-                child: const Text('Upload images')),
+                });
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).primaryColor,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                child: Text(
+                  'Upload images',
+                  style: TextStyle(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Jost',
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -118,11 +149,21 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   Widget addImageContainer() {
     return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).primaryColor),
-        borderRadius: BorderRadius.circular(8),
+      color: Theme.of(context).scaffoldBackgroundColor,
+      margin: const EdgeInsets.all(2),
+      child: OutlinedButton(
+        onPressed: () {
+          selectImages();
+        },
+        style: ButtonStyle(
+            side: MaterialStateProperty.all(BorderSide(
+          color: Theme.of(context).primaryColor,
+        ))),
+        child: Icon(
+          Icons.add,
+          color: Theme.of(context).primaryColor,
+        ),
       ),
-      child: const Icon(Icons.add),
     );
   }
 }

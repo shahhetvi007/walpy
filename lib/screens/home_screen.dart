@@ -46,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    isAdmin = PreferenceUtils.getBool('isAdmin');
     getAllSettings();
     getAutoChange();
     getCategoryAndImage();
@@ -80,42 +81,63 @@ class _HomeScreenState extends State<HomeScreen> {
                     scrollDirection: Axis.horizontal,
                     itemBuilder: (ctx, index) {
                       // getImageUrl(categories[index]);
-                      return index == 0
-                          ? GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (ctx) => AdminHomeScreen()));
-                              },
-                              child: Container(
-                                height: 50,
-                                width: 100,
-                                margin:
-                                    const EdgeInsets.only(left: 5, right: 5, bottom: 8),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: colorTheme),
-                                  color: colorWhite,
-                                  borderRadius: BorderRadius.circular(8),
+                      if (isAdmin) {
+                        return index == 0
+                            ? GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (ctx) => AdminHomeScreen()));
+                                },
+                                child: Container(
+                                  // height: 50,
+                                  width: 100,
+                                  margin: const EdgeInsets.only(
+                                    left: 5,
+                                    right: 5,
+                                    bottom: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                    color: Theme.of(context).scaffoldBackgroundColor,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 30,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ))
+                            : GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _currentIndex = index - 1;
+                                  });
+                                },
+                                child: CategoryTile(
+                                  imageUrl: imageUrls.isNotEmpty
+                                      ? imageUrls[index - 1]
+                                      : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
+                                  category: categories[index - 1],
                                 ),
-                                child: const Icon(
-                                  Icons.add,
-                                  size: 30,
-                                ),
-                              ))
-                          : GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _currentIndex = index - 1;
-                                });
-                              },
-                              child: CategoryTile(
-                                imageUrl: imageUrls.isNotEmpty
-                                    ? imageUrls[index - 1]
-                                    : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
-                                category: categories[index - 1],
-                              ),
-                            );
+                              );
+                      }
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _currentIndex = index;
+                          });
+                        },
+                        child: CategoryTile(
+                          imageUrl: imageUrls.isNotEmpty
+                              ? imageUrls[index]
+                              : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
+                          category: categories[index],
+                        ),
+                      );
                     }),
               ),
               Expanded(
@@ -138,20 +160,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                     childAspectRatio: itemWidth / itemHeight,
                                   ),
                                   itemBuilder: (ctx, index) {
-                                    return index == 0
-                                        ? GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (ctx) => AdminHomeScreen(
-                                                          category: _collectionReference
-                                                              .doc(categories[
-                                                                  _currentIndex])
-                                                              .id)));
-                                            },
-                                            child: addImageContainer())
-                                        : GridItem(snapshot.data.docs[index - 1]['url']);
+                                    if (isAdmin) {
+                                      return index == 0
+                                          ? GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (ctx) => AdminHomeScreen(
+                                                            category: _collectionReference
+                                                                .doc(categories[
+                                                                    _currentIndex])
+                                                                .id)));
+                                              },
+                                              child: addImageContainer())
+                                          : GridItem(
+                                              snapshot.data.docs[index - 1]['url']);
+                                    }
+                                    return GridItem(snapshot.data.docs[index]['url']);
                                   })
                               : const Center(child: CircularProgressIndicator());
                         })
@@ -173,157 +199,303 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
             children: [
               CircleAvatar(
-                backgroundImage: NetworkImage(profileImage),
+                backgroundImage: profileImage != ''
+                    ? NetworkImage(profileImage)
+                    : Image.asset('assets/images/placeholder.jpeg').image,
                 radius: 40,
               ),
               const SizedBox(height: 5),
               Text(
                 username,
-                // style: TextStyle(color: colorWhite),
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
               ),
-              Text(email),
+              Text(
+                email,
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
             ],
           )),
-          const ListTile(
+          ListTile(
             title: Text(
               'Settings',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Jost',
+                color: Theme.of(context).primaryColor,
+              ),
             ),
           ),
-          ListTile(
-            title: const Text(
-              'Auto Change Wallpaper',
-              style: TextStyle(fontSize: 14),
-            ),
-            onTap: () {},
-            trailing: SizedBox(
-              height: 20,
-              child: Transform.scale(
-                scale: .7,
-                child: CupertinoSwitch(
-                  value: isAutoChange,
-                  onChanged: (value) {
-                    toggleSwitch(value);
-                  },
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Auto Change Wallpaper',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Jost',
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              onTap: () {},
+              trailing: SizedBox(
+                height: 20,
+                child: Transform.scale(
+                  scale: .7,
+                  child: CupertinoSwitch(
+                    value: isAutoChange,
+                    onChanged: (value) {
+                      toggleSwitch(value);
+                    },
+                    activeColor: Theme.of(context).primaryColor,
+                  ),
                 ),
               ),
             ),
-          ),
-          const Divider(),
-          const ListTile(
+          if (!isAdmin) const Divider(),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Conditions',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Jost',
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'On Wi-fi',
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                'Device must be connected to a Wifi-network.',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
+              ),
+              trailing: Checkbox(
+                value: onWifi,
+                fillColor: isAutoChange
+                    ? MaterialStatePropertyAll<Color>(
+                        Theme.of(context).primaryColor,
+                      )
+                    : const MaterialStatePropertyAll<Color>(grey),
+                checkColor: Theme.of(context).scaffoldBackgroundColor,
+                onChanged: isAutoChange
+                    ? (value) {
+                        setState(() {
+                          onWifi = value!;
+                        });
+                        PreferenceUtils.setBool('onWifi', onWifi);
+                        autoChangeWallpaper();
+                      }
+                    : null,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            ),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Charging',
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                'Device must be connected to a power source.',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
+              ),
+              trailing: Checkbox(
+                fillColor: isAutoChange
+                    ? MaterialStatePropertyAll<Color>(
+                        Theme.of(context).primaryColor,
+                      )
+                    : const MaterialStatePropertyAll<Color>(grey),
+                checkColor: Theme.of(context).scaffoldBackgroundColor,
+                // checkColor: colorTheme,
+                value: charging,
+                onChanged: isAutoChange
+                    ? (value) {
+                        setState(() {
+                          charging = value!;
+                        });
+                        PreferenceUtils.setBool('charging', charging);
+                        autoChangeWallpaper();
+                      }
+                    : null,
+              ),
+            ),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Idle',
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                'Device must be inactive.',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
+              ),
+              trailing: Checkbox(
+                value: idle,
+                fillColor: isAutoChange
+                    ? MaterialStatePropertyAll<Color>(
+                        Theme.of(context).primaryColor,
+                      )
+                    : const MaterialStatePropertyAll<Color>(grey),
+                checkColor: Theme.of(context).scaffoldBackgroundColor,
+                onChanged: isAutoChange
+                    ? (value) {
+                        setState(() {
+                          idle = value!;
+                        });
+                        PreferenceUtils.setBool('idle', idle);
+                        autoChangeWallpaper();
+                      }
+                    : null,
+              ),
+            ),
+          if (!isAdmin) const Divider(),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Options',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Jost',
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Interval',
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                'Each wallpaper will last for $interval',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
+              ),
+              onTap: showIntervalOptions,
+            ),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Screen',
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                screen,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
+              ),
+              onTap: showScreenOptions,
+            ),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Source',
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                source,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
+              ),
+              onTap: showSourceOptions,
+            ),
+          ListTile(
             title: Text(
-              'Conditions',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              'Theme',
+              style: TextStyle(
+                fontFamily: 'Jost',
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
             ),
-          ),
-          ListTile(
-            title: const Text('On Wi-fi'),
-            subtitle: const Text(
-              'Device must be connected to a Wifi-network.',
-              style: TextStyle(fontSize: 12, color: grey),
-            ),
-            trailing: Checkbox(
-              value: onWifi,
-              onChanged: isAutoChange
-                  ? (value) {
-                      setState(() {
-                        onWifi = value!;
-                      });
-                    }
-                  : null,
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-          ),
-          ListTile(
-            title: const Text('Charging'),
-            subtitle: const Text(
-              'Device must be connected to a power source.',
-              style: TextStyle(fontSize: 12, color: grey),
-            ),
-            trailing: Checkbox(
-              value: charging,
-              onChanged: isAutoChange
-                  ? (value) {
-                      setState(() {
-                        charging = value!;
-                      });
-                      autoChangeWallpaper();
-                    }
-                  : null,
-            ),
-          ),
-          ListTile(
-            title: const Text('Idle'),
-            subtitle: const Text(
-              'Device must be inactive.',
-              style: TextStyle(fontSize: 12, color: grey),
-            ),
-            trailing: Checkbox(
-              value: idle,
-              onChanged: isAutoChange
-                  ? (value) {
-                      setState(() {
-                        idle = value!;
-                      });
-                      autoChangeWallpaper();
-                    }
-                  : null,
-            ),
-          ),
-          const Divider(),
-          const ListTile(
-            title: Text(
-              'Options',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ListTile(
-            title: const Text('Interval'),
-            subtitle: Text(
-              'Each wallpaper will last for $interval',
-              style: const TextStyle(fontSize: 12, color: grey),
-            ),
-            onTap: showIntervalOptions,
-          ),
-          ListTile(
-            title: const Text('Screen'),
-            subtitle: Text(
-              screen,
-              style: const TextStyle(fontSize: 12, color: grey),
-            ),
-            onTap: showScreenOptions,
-          ),
-          ListTile(
-            title: const Text('Source'),
-            subtitle: Text(
-              source,
-              style: const TextStyle(fontSize: 12, color: grey),
-            ),
-            onTap: showSourceOptions,
-          ),
-          ListTile(
-            title: const Text('Theme'),
             subtitle: Text(
               theme,
-              style: const TextStyle(fontSize: 12, color: grey),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).primaryColor,
+                  fontFamily: 'Jost'),
             ),
             onTap: () => showThemeOptions(),
           ),
-          const Divider(),
-          ListTile(
-            title: const Text(
-              'Favorites',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          if (!isAdmin) const Divider(),
+          if (!isAdmin)
+            ListTile(
+              title: Text(
+                'Favorites',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Jost',
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                    context, MaterialPageRoute(builder: (ctx) => const FavoriteScreen()));
+              },
             ),
-            onTap: () {
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (ctx) => const FavoriteScreen()));
-            },
-          ),
           ListTile(
-            title: const Text(
+            title: Text(
               'Logout',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Jost',
+                color: Theme.of(context).primaryColor,
+              ),
             ),
             onTap: logout,
           ),
@@ -337,7 +509,10 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (ctx) {
           return AlertDialog(
-            title: const Text('Are you sure you want to logout?'),
+            title: Text(
+              'Are you sure you want to logout?',
+              style: TextStyle(fontFamily: 'Jost', color: Theme.of(context).primaryColor),
+            ),
             actions: [
               TextButton(
                   onPressed: () async {
@@ -348,12 +523,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (ctx) => const SignInScreen()));
                     });
                   },
-                  child: const Text('Yes')),
+                  child: Text(
+                    'Yes',
+                    style: TextStyle(
+                      fontFamily: 'Jost',
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  )),
               TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Cancel')),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontFamily: 'Jost'),
+                  )),
             ],
           );
         });
@@ -417,6 +601,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   getAllSettings() {
     interval = PreferenceUtils.getString('interval', 'every 15 minutes');
+    print(interval);
     int val = PreferenceUtils.getInt('screen', 1);
     if (val == 1) {
       screen = 'Home Screen';
@@ -427,8 +612,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     source = PreferenceUtils.getString('source', 'Random Wallpapers');
     theme = PreferenceUtils.getString('theme', 'System');
+    onWifi = PreferenceUtils.getBool('onWifi');
+    charging = PreferenceUtils.getBool('charging');
+    idle = PreferenceUtils.getBool('idle');
+
+    print('isAdmin $isAdmin');
     setState(() {});
-    isAdmin = PreferenceUtils.getBool('isAdmin');
   }
 
   autoChangeWallpaper() async {
@@ -459,17 +648,28 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (ctx) {
           return SimpleDialog(
-            title: const Text('Select Interval'),
+            title: Text(
+              'Select Interval',
+              style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor),
+            ),
             children: List.generate(6, (index) {
               return RadioListTile(
                   value: intervals[index],
                   groupValue: interval,
-                  title: Text(intervals[index]),
+                  activeColor: Theme.of(context).primaryColor,
+                  title: Text(
+                    intervals[index],
+                    style: TextStyle(
+                        fontFamily: 'Jost', color: Theme.of(context).primaryColor),
+                  ),
                   selected: true,
                   onChanged: (value) {
-                    print(value);
+                    print(value.toString().toLowerCase());
                     setState(() {
-                      interval = value.toString();
+                      interval = value.toString().toLowerCase();
                       PreferenceUtils.setString(
                           'interval', value.toString().toLowerCase());
                     });
@@ -488,10 +688,19 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (ctx) {
           return SimpleDialog(
-            title: const Text('Select Screen'),
+            title: Text(
+              'Select Screen',
+              style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor),
+            ),
             children: [
               SimpleDialogOption(
-                child: const Text('Home Screen'),
+                child: const Text(
+                  'Home Screen',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   PreferenceUtils.setInt('screen', WallpaperManager.HOME_SCREEN);
 
@@ -499,14 +708,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               SimpleDialogOption(
-                child: const Text('Lock Screen'),
+                child: const Text(
+                  'Lock Screen',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   PreferenceUtils.setInt('screen', WallpaperManager.LOCK_SCREEN);
                   Navigator.pop(context, 'Lock Screen');
                 },
               ),
               SimpleDialogOption(
-                child: const Text('Both'),
+                child: const Text(
+                  'Both',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   PreferenceUtils.setInt('screen', WallpaperManager.BOTH_SCREEN);
                   Navigator.pop(context, 'Home and Lock Screen');
@@ -519,7 +734,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () {
                     Navigator.pop(context, screen);
                   },
-                  child: const Text('Cancel'))
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                        fontFamily: 'Jost',
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold),
+                  ))
             ],
           );
         });
@@ -532,17 +753,29 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (ctx) {
           return SimpleDialog(
-            title: const Text('Select Source'),
+            title: Text(
+              'Select Source',
+              style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor),
+            ),
             children: [
               SimpleDialogOption(
-                child: const Text('Favorite wallpapers'),
+                child: const Text(
+                  'Favorite wallpapers',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   PreferenceUtils.setString('source', 'Favorite Wallpapers');
                   Navigator.pop(context, 'Favorite Wallpapers');
                 },
               ),
               SimpleDialogOption(
-                child: const Text('Random wallpapers'),
+                child: const Text(
+                  'Random wallpapers',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   PreferenceUtils.setString('source', 'Random Wallpapers');
                   Navigator.pop(context, 'Random Wallpapers');
@@ -555,7 +788,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () {
                     Navigator.pop(context, source);
                   },
-                  child: const Text('Cancel'))
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                        fontFamily: 'Jost',
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold),
+                  ))
             ],
           );
         });
@@ -568,10 +807,19 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (ctx) {
           return SimpleDialog(
-            title: const Text('Theme'),
+            title: Text(
+              'Theme',
+              style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor),
+            ),
             children: [
               SimpleDialogOption(
-                child: const Text('Light'),
+                child: const Text(
+                  'Light',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   MyApp.of(ctx)?.changeTheme(theme: ThemeMode.light);
                   PreferenceUtils.setString('theme', 'Light');
@@ -579,7 +827,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               SimpleDialogOption(
-                child: const Text('Dark'),
+                child: const Text(
+                  'Dark',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   MyApp.of(ctx)?.changeTheme(theme: ThemeMode.dark);
                   PreferenceUtils.setString('theme', 'Dark');
@@ -587,7 +838,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               SimpleDialogOption(
-                child: const Text('System'),
+                child: const Text(
+                  'System',
+                  style: TextStyle(fontFamily: 'Jost'),
+                ),
                 onPressed: () {
                   MyApp.of(ctx)?.changeTheme(theme: ThemeMode.system);
                   PreferenceUtils.setString('theme', 'System');
@@ -601,14 +855,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () {
                     Navigator.pop(context, theme);
                   },
-                  child: const Text('Cancel'))
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                        fontFamily: 'Jost',
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold),
+                  ))
             ],
           );
         });
+    print(theme);
     setState(() {});
   }
 
   void getDuration() {
+    print('intervallllll $interval');
     switch (interval) {
       case 'every 15 minutes':
         duration = const Duration(minutes: 15);
@@ -651,12 +913,16 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-            border: Border.all(color: colorTheme),
-            borderRadius: BorderRadius.circular(15),
-            color: colorWhite),
-        child: const Icon(
+          border: Border.all(
+            color: Theme.of(context).primaryColor,
+          ),
+          borderRadius: BorderRadius.circular(15),
+          color: Theme.of(context).scaffoldBackgroundColor,
+        ),
+        child: Icon(
           Icons.add,
-          size: 40,
+          size: 60,
+          color: Theme.of(context).primaryColor,
         ),
       ),
     );

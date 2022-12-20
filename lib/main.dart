@@ -6,6 +6,7 @@ import 'package:work_manager_demo/helper/wallpaper_Setting.dart';
 import 'package:work_manager_demo/res/color_resources.dart';
 import 'package:work_manager_demo/screens/home_screen.dart';
 import 'package:work_manager_demo/screens/signin_screen.dart';
+import 'package:work_manager_demo/screens/splash_screen.dart';
 import 'package:workmanager/workmanager.dart';
 
 const myTask = "syncWithTheBackEnd";
@@ -91,53 +92,63 @@ class _MyAppState extends State<MyApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: _theme,
-      home: AuthHelper().user != null ? const HomeScreen() : const SignInScreen(),
+      home: const SplashScreen(),
     );
   }
 
   ThemeData darkTheme = ThemeData(
-      brightness: Brightness.dark,
-      primarySwatch: primaryWhite,
-      primaryColor: colorWhite,
-      backgroundColor: colorTheme,
-      scaffoldBackgroundColor: colorTheme,
-      appBarTheme: const AppBarTheme(
-          backgroundColor: colorTheme,
-          iconTheme: IconThemeData(color: colorWhite),
-          elevation: 0,
-          titleTextStyle: TextStyle(
+    brightness: Brightness.dark,
+    primarySwatch: primaryWhite,
+    primaryColor: colorWhite,
+    backgroundColor: colorBlack,
+    scaffoldBackgroundColor: colorBlack,
+    appBarTheme: const AppBarTheme(
+        backgroundColor: colorBlack,
+        iconTheme: IconThemeData(color: colorWhite),
+        elevation: 0,
+        titleTextStyle: TextStyle(
             color: colorWhite,
             fontSize: 20,
             fontWeight: FontWeight.bold,
-          )),
-      textTheme: const TextTheme(titleLarge: TextStyle(color: colorWhite)),
-      textButtonTheme:
-          TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: colorWhite)),
-      elevatedButtonTheme: const ElevatedButtonThemeData(
-          style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll<Color>(colorWhite),
-        foregroundColor: MaterialStatePropertyAll<Color>(colorTheme),
-      )));
+            fontFamily: 'Jost')),
+    textTheme: const TextTheme(
+      titleLarge: TextStyle(color: colorWhite),
+      // subtitle1: const TextStyle(color: colorWhite),
+    ),
+    textButtonTheme:
+        TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: colorWhite)),
+    elevatedButtonTheme: const ElevatedButtonThemeData(
+        style: ButtonStyle(
+      backgroundColor: MaterialStatePropertyAll<Color>(colorWhite),
+      foregroundColor: MaterialStatePropertyAll<Color>(colorWhite),
+    )),
+    // drawerTheme: const DrawerThemeData(
+    //   backgroundColor: colorBlack,
+    // )
+  );
 
   ThemeData lightTheme = ThemeData(
-    brightness: Brightness.light,
-    primarySwatch: primaryBlack,
-    primaryColor: colorTheme,
-    backgroundColor: colorWhite,
-    scaffoldBackgroundColor: colorWhite,
-    appBarTheme: const AppBarTheme(
-        backgroundColor: white1,
-        iconTheme: IconThemeData(color: Colors.black),
-        elevation: 0,
-        titleTextStyle: TextStyle(
-          color: colorTheme,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        )),
-    textTheme: const TextTheme(titleLarge: TextStyle(color: colorTheme)),
-    inputDecorationTheme: const InputDecorationTheme(
-        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: colorTheme)),
-        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: colorTheme)),
-        labelStyle: TextStyle(color: colorTheme)),
-  );
+      brightness: Brightness.light,
+      primarySwatch: primaryBlack,
+      primaryColor: colorBlack,
+      // secondaryHeaderColor: Colors.blue,
+      backgroundColor: colorWhite,
+      scaffoldBackgroundColor: colorWhite,
+      appBarTheme: const AppBarTheme(
+          backgroundColor: colorWhite,
+          iconTheme: IconThemeData(color: colorBlack),
+          elevation: 0,
+          titleTextStyle: TextStyle(
+              color: colorBlack,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Jost')),
+      textTheme: TextTheme(titleLarge: TextStyle(color: colorTheme, fontFamily: 'Jost')),
+      inputDecorationTheme: InputDecorationTheme(
+          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: colorTheme)),
+          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: colorTheme)),
+          labelStyle: TextStyle(color: colorTheme, fontFamily: 'Jost')),
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: colorWhite,
+      ));
 }

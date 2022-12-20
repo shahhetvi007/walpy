@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:work_manager_demo/helper/auth_helper.dart';
 import 'package:work_manager_demo/widgets/grid_item.dart';
 
+import '../../res/color_resources.dart';
+
 class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({Key? key}) : super(key: key);
 
@@ -27,6 +29,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Favorites'),
+        iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
       ),
       body: Container(
         margin: const EdgeInsets.all(8),

@@ -22,30 +22,28 @@ class CustomRadioButton extends StatelessWidget {
   // bool isSelected = false;
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        decoration: BoxDecoration(
-            color: isSelected ? Theme.of(context).primaryColor : colorWhite,
-            border: Border.all(
-                color: isSelected ? Theme.of(context).primaryColor : colorTheme),
-            borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          title: Text(
-            title,
-            style: TextStyle(
-                color:
-                    isSelected ? Theme.of(context).scaffoldBackgroundColor : Colors.grey,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+    return Container(
+      decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).primaryColor : colorWhite,
+          border: Border.all(color: isSelected ? Theme.of(context).primaryColor : grey),
+          borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Theme.of(context).scaffoldBackgroundColor : Colors.grey,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontFamily: 'Jost',
           ),
-          trailing: Radio(
-              toggleable: true,
-              activeColor: Theme.of(context).primaryColor,
-              fillColor: MaterialStatePropertyAll<Color>(Colors.red),
-              value: value,
-              groupValue: groupValue,
-              onChanged: onChanged),
         ),
+        trailing: Radio(
+            toggleable: true,
+            activeColor: Theme.of(context).primaryColor,
+            fillColor: MaterialStatePropertyAll<Color>(
+                isSelected ? Theme.of(context).scaffoldBackgroundColor : grey),
+            value: value,
+            groupValue: groupValue,
+            onChanged: onChanged),
       ),
     );
   }

@@ -65,6 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
                       color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost',
                     ),
                   ),
                 ),
@@ -75,7 +76,10 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                   alignment: Alignment.center,
                   child: Text(
                     'Add Profile Photo',
-                    style: TextStyle(color: Theme.of(context).primaryColor),
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost',
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -90,7 +94,7 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                     }
                     return null;
                   },
-                  onFieldSubmitted: (val) {
+                  onTextChanged: (val) {
                     setState(() {
                       username = val;
                     });
@@ -106,7 +110,7 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                     }
                     return 'Please enter valid email';
                   },
-                  onFieldSubmitted: (val) {
+                  onTextChanged: (val) {
                     setState(() {
                       email = val;
                     });
@@ -139,7 +143,7 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                     }
                     return null;
                   },
-                  onFieldSubmitted: (val) {
+                  onTextChanged: (val) {
                     if (val == passwordController.text) {
                       setState(() {
                         password = val;
@@ -168,6 +172,7 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                         });
                       },
                     )),
+                    const SizedBox(width: 10),
                     Flexible(
                         child: CustomRadioButton(
                       title: Role.Admin.name,
@@ -190,17 +195,28 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                     shape:
                         RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     minimumSize: const Size.fromHeight(50),
+                    backgroundColor: Theme.of(context).primaryColor,
                   ),
                   onPressed: () {
                     signUp(context);
                   },
-                  child: const Text('Sign Up'),
+                  child: Text(
+                    'Sign Up',
+                    style: TextStyle(
+                      fontFamily: 'Jost',
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account?'),
+                    const Text(
+                      'Already have an account?',
+                      style: TextStyle(fontFamily: 'Jost'),
+                    ),
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacement(context,
@@ -211,6 +227,8 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                         style: TextStyle(
                           color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.bold,
+                          fontFamily: 'Jost',
+                          fontSize: 14,
                         ),
                       ),
                     )

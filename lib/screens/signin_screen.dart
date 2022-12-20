@@ -21,21 +21,22 @@ class _SignInScreenState extends State<SignInScreen> with InputValidationMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(25.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            // mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            // mainAxisSize: MainAxisSize.max,
+            // crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 'Sign In',
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30,
-                  color: Theme.of(context).primaryColor,
-                ),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
               ),
               const SizedBox(height: 30),
               commonTextFormField(
@@ -47,7 +48,7 @@ class _SignInScreenState extends State<SignInScreen> with InputValidationMixin {
                   }
                   return 'Please enter valid email';
                 },
-                onFieldSubmitted: (val) {
+                onTextChanged: (val) {
                   setState(() {
                     email = val;
                   });
@@ -60,7 +61,7 @@ class _SignInScreenState extends State<SignInScreen> with InputValidationMixin {
                 context: context,
                 keyboardType: TextInputType.text,
                 obscureText: true,
-                onFieldSubmitted: (value) {
+                onTextChanged: (value) {
                   setState(() {
                     password = value;
                   });
@@ -75,21 +76,38 @@ class _SignInScreenState extends State<SignInScreen> with InputValidationMixin {
                 hintText: 'Enter password',
               ),
               const SizedBox(height: 30),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              Container(
+                decoration: BoxDecoration(
+                  // gradient: primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                onPressed: () {
-                  signIn(context);
-                },
-                child: const Text('Sign In'),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    shape:
+                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: Theme.of(context).primaryColor,
+                  ),
+                  onPressed: () {
+                    signIn(context);
+                  },
+                  child: Text(
+                    'Sign In',
+                    style: TextStyle(
+                        fontFamily: 'Jost',
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).scaffoldBackgroundColor),
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Don\'t have an account?'),
+                  const Text(
+                    'Don\'t have an account?',
+                    style: TextStyle(fontFamily: 'Jost', fontSize: 16),
+                  ),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushReplacement(
@@ -100,8 +118,7 @@ class _SignInScreenState extends State<SignInScreen> with InputValidationMixin {
                     child: const Text(
                       ' Sign Up',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                          fontWeight: FontWeight.bold, fontFamily: 'Jost', fontSize: 18),
                     ),
                   ),
                 ],
@@ -111,13 +128,15 @@ class _SignInScreenState extends State<SignInScreen> with InputValidationMixin {
                 text: TextSpan(
                     text: 'Sign up as an ',
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                    ),
+                        color: Theme.of(context).primaryColor,
+                        fontFamily: 'Jost',
+                        fontSize: 16),
                     children: [
                       TextSpan(
                           text: 'Admin',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
+                            fontFamily: 'Jost',
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {

@@ -12,7 +12,7 @@ Widget commonTextFormField({
   int maxLines = 1,
   TextEditingController? controller,
   String? Function(String?)? validator,
-  void Function(String)? onFieldSubmitted,
+  void Function(String)? onTextChanged,
 }) {
   return TextFormField(
     keyboardType: keyboardType,
@@ -21,12 +21,13 @@ Widget commonTextFormField({
     controller: controller,
     validator: validator,
     autovalidateMode: AutovalidateMode.onUserInteraction,
-    onFieldSubmitted: onFieldSubmitted,
+    onChanged: onTextChanged,
     obscureText: obscureText,
     decoration: InputDecoration(
       hintText: hintText,
-      hintStyle: TextStyle(color: Theme.of(context).primaryColor),
+      hintStyle: TextStyle(color: Theme.of(context).primaryColor, fontFamily: 'Jost'),
       labelText: labelText,
+      labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontFamily: 'Jost'),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.2)),

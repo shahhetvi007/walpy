@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 class CategoryTile extends StatelessWidget {
   final String imageUrl, category;
 
-  const CategoryTile(
-      {super.key, required this.imageUrl, required this.category});
+  const CategoryTile({super.key, required this.imageUrl, required this.category});
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +35,10 @@ class CategoryTile extends StatelessWidget {
             child: Text(
               category,
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Jost'),
             ),
           )
         ],
