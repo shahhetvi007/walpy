@@ -118,9 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   });
                                 },
                                 child: CategoryTile(
-                                  imageUrl: imageUrls.isNotEmpty
-                                      ? imageUrls[index - 1]
-                                      : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
                                   category: categories[index - 1],
                                 ),
                               );
@@ -132,9 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           });
                         },
                         child: CategoryTile(
-                          imageUrl: imageUrls.isNotEmpty
-                              ? imageUrls[index]
-                              : 'https://firebasestorage.googleapis.com/v0/b/wallpaper-app-69c12.appspot.com/o/uploads%2Fimage_picker2649116931654427709.jpg?alt=media&token=f93b5e5f-9bf8-44c9-80bb-c4d999aa9671',
                           category: categories[index],
                         ),
                       );
@@ -551,25 +545,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> getImageUrl() async {
-    if (categories.isNotEmpty) {
-      for (var category in categories) {
-        Stream<QuerySnapshot> snapshot =
-            _collectionReference.doc(category).collection('images').limit(1).snapshots();
-        snapshot.forEach((element) {
-          element.docs.asMap().forEach((key, value) {
-            imageUrls.add(element.docs.first.get('url'));
-            setState(() {});
-          });
-        });
-      }
-    }
-  }
-
   Future getCategoryAndImage() async {
     await getProfile();
     await getCategories();
-    await getImageUrl();
   }
 
   Future<void> getProfile() async {

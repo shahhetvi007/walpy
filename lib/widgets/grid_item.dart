@@ -83,6 +83,8 @@ class _GridItemState extends State<GridItem> with WidgetsBindingObserver {
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
+                  // placeholder: (context, value) =>
+                  //     Image.asset('assets/images/placeholder.jpeg'),
                   progressIndicatorBuilder: (context, url, downloadProgress) => Center(
                       child: CircularProgressIndicator(value: downloadProgress.progress)),
                 ),

@@ -250,7 +250,10 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
           height: 120,
           width: 120,
           decoration: BoxDecoration(
-              shape: BoxShape.circle, color: Theme.of(context).primaryColor),
+            shape: BoxShape.circle,
+            color: Theme.of(context).scaffoldBackgroundColor,
+            border: Border.all(color: Theme.of(context).primaryColor),
+          ),
         ),
         (imagePicked != null)
             ? Container(
@@ -271,8 +274,8 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
                 top: 0,
                 bottom: 0,
                 child: Icon(
-                  Icons.person_add_alt_1_outlined,
-                  color: Theme.of(context).scaffoldBackgroundColor,
+                  Icons.person_add_outlined,
+                  color: Theme.of(context).primaryColor,
                   size: 32,
                 ),
               )
