@@ -30,6 +30,7 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
   String password = '';
   String username = '';
   String imageUrl = '';
+  bool isLoading = false;
   File? imagePicked;
 
   var roleSelectedValue = Role.User;
@@ -49,196 +50,200 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(25.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    'New User? Sign Up',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Theme.of(context).primaryColor,
-                      fontFamily: 'Jost',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Align(alignment: Alignment.center, child: addProfile()),
-                const SizedBox(height: 20),
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Add Profile Photo',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontFamily: 'Jost',
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                commonTextFormField(
-                  context: context,
-                  hintText: 'Name',
-                  labelText: 'Name',
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'Please enter username';
-                    }
-                    return null;
-                  },
-                  onTextChanged: (val) {
-                    setState(() {
-                      username = val;
-                    });
-                  },
-                ),
-                const SizedBox(height: 30),
-                commonTextFormField(
-                  context: context,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (isEmailValid(value!)) {
-                      return null;
-                    }
-                    return 'Please enter valid email';
-                  },
-                  onTextChanged: (val) {
-                    setState(() {
-                      email = val;
-                    });
-                  },
-                  labelText: 'Email',
-                  hintText: 'Enter your email',
-                ),
-                const SizedBox(height: 30),
-                commonTextFormField(
-                  context: context,
-                  controller: passwordController,
-                  keyboardType: TextInputType.text,
-                  obscureText: true,
-                  validator: (value) {
-                    if (isPasswordValid(value!)) {
-                      return null;
-                    }
-                    return 'Please enter valid password';
-                  },
-                  labelText: 'Password',
-                  hintText: 'Enter password',
-                ),
-                const SizedBox(height: 30),
-                commonTextFormField(
-                  context: context,
-                  keyboardType: TextInputType.text,
-                  validator: (value) {
-                    if (value != passwordController.text) {
-                      return 'Password do not match';
-                    }
-                    return null;
-                  },
-                  onTextChanged: (val) {
-                    if (val == passwordController.text) {
-                      setState(() {
-                        password = val;
-                      });
-                    }
-                  },
-                  obscureText: true,
-                  labelText: 'Confirm Password',
-                  hintText: 'Confirm password',
-                ),
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Flexible(
-                        child: CustomRadioButton(
-                      title: Role.User.name,
-                      value: Role.User,
-                      groupValue: roleSelectedValue,
-                      isSelected: _isUserSelected,
-                      onChanged: (dynamic val) {
-                        setState(() {
-                          roleSelectedValue = val;
-                          _isUserSelected = true;
-                          _isAdminSelected = false;
-                        });
-                      },
-                    )),
-                    const SizedBox(width: 10),
-                    Flexible(
-                        child: CustomRadioButton(
-                      title: Role.Admin.name,
-                      value: Role.Admin,
-                      groupValue: roleSelectedValue,
-                      isSelected: _isAdminSelected,
-                      onChanged: (dynamic val) {
-                        setState(() {
-                          roleSelectedValue = val;
-                          _isUserSelected = false;
-                          _isAdminSelected = true;
-                        });
-                      },
-                    )),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    shape:
-                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    minimumSize: const Size.fromHeight(50),
-                    backgroundColor: Theme.of(context).primaryColor,
-                  ),
-                  onPressed: () {
-                    signUp(context);
-                  },
-                  child: Text(
-                    'Sign Up',
-                    style: TextStyle(
-                      fontFamily: 'Jost',
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Already have an account?',
-                      style: TextStyle(fontFamily: 'Jost'),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(context,
-                            MaterialPageRoute(builder: (ctx) => const SignInScreen()));
-                      },
-                      child: Text(
-                        ' Sign In',
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Jost',
-                          fontSize: 14,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(25.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'New User? Sign Up',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Theme.of(context).primaryColor,
+                            fontFamily: 'Jost',
+                          ),
                         ),
                       ),
-                    )
-                  ],
-                )
-              ],
+                      const SizedBox(height: 30),
+                      Align(alignment: Alignment.center, child: addProfile()),
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Add Profile Photo',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontFamily: 'Jost',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      commonTextFormField(
+                        context: context,
+                        hintText: 'Name',
+                        labelText: 'Name',
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Please enter username';
+                          }
+                          return null;
+                        },
+                        onTextChanged: (val) {
+                          setState(() {
+                            username = val;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      commonTextFormField(
+                        context: context,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (isEmailValid(value!)) {
+                            return null;
+                          }
+                          return 'Please enter valid email';
+                        },
+                        onTextChanged: (val) {
+                          setState(() {
+                            email = val;
+                          });
+                        },
+                        labelText: 'Email',
+                        hintText: 'Enter your email',
+                      ),
+                      const SizedBox(height: 30),
+                      commonTextFormField(
+                        context: context,
+                        controller: passwordController,
+                        keyboardType: TextInputType.text,
+                        obscureText: true,
+                        validator: (value) {
+                          if (isPasswordValid(value!)) {
+                            return null;
+                          }
+                          return 'Please enter valid password';
+                        },
+                        labelText: 'Password',
+                        hintText: 'Enter password',
+                      ),
+                      const SizedBox(height: 30),
+                      commonTextFormField(
+                        context: context,
+                        keyboardType: TextInputType.text,
+                        validator: (value) {
+                          if (value != passwordController.text) {
+                            return 'Password do not match';
+                          }
+                          return null;
+                        },
+                        onTextChanged: (val) {
+                          if (val == passwordController.text) {
+                            setState(() {
+                              password = val;
+                            });
+                          }
+                        },
+                        obscureText: true,
+                        labelText: 'Confirm Password',
+                        hintText: 'Confirm password',
+                      ),
+                      const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Flexible(
+                              child: CustomRadioButton(
+                            title: Role.User.name,
+                            value: Role.User,
+                            groupValue: roleSelectedValue,
+                            isSelected: _isUserSelected,
+                            onChanged: (dynamic val) {
+                              setState(() {
+                                roleSelectedValue = val;
+                                _isUserSelected = true;
+                                _isAdminSelected = false;
+                              });
+                            },
+                          )),
+                          const SizedBox(width: 10),
+                          Flexible(
+                              child: CustomRadioButton(
+                            title: Role.Admin.name,
+                            value: Role.Admin,
+                            groupValue: roleSelectedValue,
+                            isSelected: _isAdminSelected,
+                            onChanged: (dynamic val) {
+                              setState(() {
+                                roleSelectedValue = val;
+                                _isUserSelected = false;
+                                _isAdminSelected = true;
+                              });
+                            },
+                          )),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          minimumSize: const Size.fromHeight(50),
+                          backgroundColor: Theme.of(context).primaryColor,
+                        ),
+                        onPressed: () {
+                          signUp(context);
+                        },
+                        child: Text(
+                          'Sign Up',
+                          style: TextStyle(
+                            fontFamily: 'Jost',
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Already have an account?',
+                            style: TextStyle(fontFamily: 'Jost'),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (ctx) => const SignInScreen()));
+                            },
+                            child: Text(
+                              ' Sign In',
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Jost',
+                                fontSize: 14,
+                              ),
+                            ),
+                          )
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -375,6 +380,10 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
   }
 
   Future signUp(BuildContext context) async {
+    setState(() {
+      isLoading = true;
+      passwordController.text = '';
+    });
     await AuthHelper().signUp(email, password).then((value) async {
       if (value == null) {
         if (imagePicked != null) {
@@ -393,6 +402,9 @@ class _SignUpScreenState extends State<SignUpScreen> with InputValidationMixin {
       }
     }, onError: (err) {
       print(err.toString());
+    });
+    setState(() {
+      isLoading = false;
     });
   }
 }

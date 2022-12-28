@@ -32,24 +32,31 @@ class _HomeScreenState extends State<HomeScreen> {
   String profileImage = '';
   String email = '';
   String username = '';
-  bool isAutoChange = false;
-  bool onWifi = false;
-  bool charging = false;
-  bool idle = false;
+  bool? isAutoChange;
+  bool? onWifi;
+  bool? charging;
+  bool? idle;
   String interval = '';
   String screen = '';
   String source = 'Random wallpapers';
   String theme = '';
   Duration duration = const Duration(minutes: 15);
   bool isAdmin = false;
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
     isAdmin = PreferenceUtils.getBool('isAdmin');
-    getAllSettings();
     getAutoChange();
+    getAllSettings();
     getCategoryAndImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    getAllSettings();
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -67,197 +74,459 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
       ),
-      body: RefreshIndicator(
-        onRefresh: getCategoryAndImage,
-        child: Container(
-          margin: EdgeInsets.all(size.width * 0.02),
-          child: Column(
-            children: [
-              SizedBox(
-                height: size.height * 0.1,
-                child: ListView.builder(
-                    itemCount: isAdmin ? categories.length + 1 : categories.length,
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                    scrollDirection: Axis.horizontal,
-                    itemBuilder: (ctx, index) {
-                      // getImageUrl(categories[index]);
-                      if (isAdmin) {
-                        return index == 0
-                            ? GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (ctx) => AdminHomeScreen()));
-                                },
-                                child: Container(
-                                  // height: 50,
-                                  width: 100,
-                                  margin: const EdgeInsets.only(
-                                    left: 5,
-                                    right: 5,
-                                    bottom: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                    color: Theme.of(context).scaffoldBackgroundColor,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    Icons.add,
-                                    size: 30,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ))
-                            : GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _currentIndex = index - 1;
-                                  });
-                                },
-                                child: CategoryTile(
-                                  category: categories[index - 1],
-                                ),
-                              );
-                      }
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _currentIndex = index;
-                          });
-                        },
-                        child: CategoryTile(
-                          category: categories[index],
-                        ),
-                      );
-                    }),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: getCategoryAndImage,
+              child: Container(
+                margin: EdgeInsets.all(size.width * 0.02),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: size.height * 0.1,
+                      child: ListView.builder(
+                          itemCount: isAdmin ? categories.length + 1 : categories.length,
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (ctx, index) {
+                            // getImageUrl(categories[index]);
+                            if (isAdmin) {
+                              return index == 0
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (ctx) => AdminHomeScreen()));
+                                      },
+                                      child: Stack(
+                                        children: [
+                                          Container(
+                                            height: 50,
+                                            width: 100,
+                                            margin: const EdgeInsets.only(
+                                              left: 5,
+                                              right: 5,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: Theme.of(context).primaryColor,
+                                              ),
+                                              color: Theme.of(context)
+                                                  .scaffoldBackgroundColor,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(
+                                              Icons.add,
+                                              size: 30,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ))
+                                  : GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _currentIndex = index - 1;
+                                        });
+                                      },
+                                      child: CategoryTile(
+                                        category: categories[index - 1],
+                                      ),
+                                    );
+                            }
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _currentIndex = index;
+                                });
+                              },
+                              child: CategoryTile(
+                                category: categories[index],
+                              ),
+                            );
+                          }),
+                    ),
+                    Expanded(
+                      child: categories.isNotEmpty
+                          ? StreamBuilder(
+                              stream: _collectionReference
+                                  .doc(categories[_currentIndex])
+                                  .collection('images')
+                                  .snapshots(),
+                              builder: (BuildContext context,
+                                  AsyncSnapshot<dynamic> snapshot) {
+                                return snapshot.hasData && AuthHelper().user != null
+                                    ? GridView.builder(
+                                        itemCount: isAdmin
+                                            ? snapshot.data.docs.length + 1
+                                            : snapshot.data.docs.length,
+                                        gridDelegate:
+                                            SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisSpacing: 3,
+                                          crossAxisSpacing: 3,
+                                          childAspectRatio: itemWidth / itemHeight,
+                                        ),
+                                        itemBuilder: (ctx, index) {
+                                          if (isAdmin) {
+                                            return index == 0
+                                                ? GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (ctx) => AdminHomeScreen(
+                                                                  category:
+                                                                      _collectionReference
+                                                                          .doc(categories[
+                                                                              _currentIndex])
+                                                                          .id)));
+                                                    },
+                                                    child: addImageContainer())
+                                                : GridItem(
+                                                    snapshot.data.docs[index - 1]['url']);
+                                          }
+                                          return GridItem(
+                                              snapshot.data.docs[index]['url']);
+                                        })
+                                    : const Center(child: CircularProgressIndicator());
+                              })
+                          : const Center(child: CircularProgressIndicator()),
+                    ),
+                  ],
+                ),
               ),
-              Expanded(
-                child: categories.isNotEmpty
-                    ? StreamBuilder(
-                        stream: _collectionReference
-                            .doc(categories[_currentIndex])
-                            .collection('images')
-                            .snapshots(),
-                        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-                          return snapshot.hasData
-                              ? GridView.builder(
-                                  itemCount: isAdmin
-                                      ? snapshot.data.docs.length + 1
-                                      : snapshot.data.docs.length,
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    mainAxisSpacing: 3,
-                                    crossAxisSpacing: 3,
-                                    childAspectRatio: itemWidth / itemHeight,
-                                  ),
-                                  itemBuilder: (ctx, index) {
-                                    if (isAdmin) {
-                                      return index == 0
-                                          ? GestureDetector(
-                                              onTap: () {
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (ctx) => AdminHomeScreen(
-                                                            category: _collectionReference
-                                                                .doc(categories[
-                                                                    _currentIndex])
-                                                                .id)));
-                                              },
-                                              child: addImageContainer())
-                                          : GridItem(
-                                              snapshot.data.docs[index - 1]['url']);
-                                    }
-                                    return GridItem(snapshot.data.docs[index]['url']);
-                                  })
-                              : const Center(child: CircularProgressIndicator());
-                        })
-                    : const Center(child: CircularProgressIndicator()),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
       drawer: drawer(),
     );
   }
 
   Widget drawer() {
-    return Drawer(
-      child: ListView(
-        children: [
-          DrawerHeader(
-              child: Column(
-            children: [
-              CircleAvatar(
-                backgroundImage: profileImage != ''
-                    ? NetworkImage(profileImage)
-                    : Image.asset('assets/images/placeholder.jpeg').image,
-                radius: 40,
-              ),
-              const SizedBox(height: 5),
-              Text(
-                username,
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+    return SafeArea(
+      child: Drawer(
+        child: ListView(
+          children: [
+            DrawerHeader(
+                child: Column(
+              children: [
+                CircleAvatar(
+                  backgroundImage: profileImage != ''
+                      ? NetworkImage(profileImage)
+                      : Image.asset('assets/images/placeholder.jpeg').image,
+                  radius: 40,
                 ),
-              ),
-              Text(
-                email,
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                const SizedBox(height: 5),
+                Text(
+                  username,
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
                 ),
-              ),
-            ],
-          )),
-          ListTile(
-            title: Text(
-              'Settings',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Jost',
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-          ),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Auto Change Wallpaper',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontFamily: 'Jost',
-                  color: Theme.of(context).primaryColor,
+                Text(
+                  email,
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
                 ),
-              ),
-              onTap: () {},
-              trailing: SizedBox(
-                height: 20,
-                child: Transform.scale(
-                  scale: .7,
-                  child: CupertinoSwitch(
-                    value: isAutoChange,
-                    onChanged: (value) {
-                      toggleSwitch(value);
-                    },
-                    activeColor: Theme.of(context).primaryColor,
+              ],
+            )),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Settings',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Jost',
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ),
-            ),
-          if (!isAdmin) const Divider(),
-          if (!isAdmin)
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Auto Change Wallpaper',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Change wallpaper periodically, based on the conditions below',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost'),
+                ),
+                onTap: () {},
+                trailing: SizedBox(
+                  height: 20,
+                  child: Transform.scale(
+                    scale: .7,
+                    child: CupertinoSwitch(
+                      value: isAutoChange ?? false,
+                      onChanged: (value) {
+                        toggleSwitch(value);
+                        // setState(() {
+                        //   isAutoChange = value;
+                        // });
+                      },
+                      activeColor: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+            if (!isAdmin) const Divider(),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Conditions',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Jost',
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'On Wi-fi',
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Device must be connected to a Wifi-network.',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost'),
+                ),
+                trailing: Checkbox(
+                  value: onWifi,
+                  fillColor: isAutoChange ?? false
+                      ? MaterialStatePropertyAll<Color>(
+                          Theme.of(context).primaryColor,
+                        )
+                      : const MaterialStatePropertyAll<Color>(grey),
+                  checkColor: Theme.of(context).scaffoldBackgroundColor,
+                  onChanged: isAutoChange ?? false
+                      ? (value) {
+                          setState(() {
+                            onWifi = value!;
+                          });
+                          PreferenceUtils.setBool('onWifi', onWifi ?? false);
+                          autoChangeWallpaper();
+                        }
+                      : null,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              ),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Charging',
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Device must be connected to a power source.',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost'),
+                ),
+                trailing: Checkbox(
+                  fillColor: isAutoChange ?? false
+                      ? MaterialStatePropertyAll<Color>(
+                          Theme.of(context).primaryColor,
+                        )
+                      : const MaterialStatePropertyAll<Color>(grey),
+                  checkColor: Theme.of(context).scaffoldBackgroundColor,
+                  // checkColor: colorTheme,
+                  value: charging,
+                  onChanged: isAutoChange ?? false
+                      ? (value) {
+                          setState(() {
+                            charging = value!;
+                          });
+                          PreferenceUtils.setBool('charging', charging ?? false);
+                          autoChangeWallpaper();
+                        }
+                      : null,
+                ),
+              ),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Idle',
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Device must be inactive.',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost'),
+                ),
+                trailing: Checkbox(
+                  value: idle,
+                  fillColor: isAutoChange ?? false
+                      ? MaterialStatePropertyAll<Color>(
+                          Theme.of(context).primaryColor,
+                        )
+                      : const MaterialStatePropertyAll<Color>(grey),
+                  checkColor: Theme.of(context).scaffoldBackgroundColor,
+                  onChanged: isAutoChange ?? false
+                      ? (value) {
+                          setState(() {
+                            idle = value!;
+                          });
+                          PreferenceUtils.setBool('idle', idle ?? false);
+                          autoChangeWallpaper();
+                        }
+                      : null,
+                ),
+              ),
+            if (!isAdmin) const Divider(),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Options',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Jost',
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Interval',
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  'Each wallpaper will last for $interval',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost'),
+                ),
+                onTap: showIntervalOptions,
+              ),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Screen',
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  screen,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost'),
+                ),
+                onTap: showScreenOptions,
+              ),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Source',
+                  style: TextStyle(
+                    fontFamily: 'Jost',
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                subtitle: Text(
+                  source,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontFamily: 'Jost'),
+                ),
+                onTap: showSourceOptions,
+              ),
             ListTile(
+              leading: isAdmin
+                  ? Icon(
+                      Icons.palette,
+                      color: Theme.of(context).primaryColor,
+                    )
+                  : null,
               title: Text(
-                'Conditions',
+                'Theme',
+                style: TextStyle(
+                  fontFamily: 'Jost',
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              subtitle: Text(
+                theme,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).primaryColor,
+                    fontFamily: 'Jost'),
+              ),
+              onTap: () => showThemeOptions(),
+            ),
+            if (!isAdmin) const Divider(),
+            if (!isAdmin)
+              ListTile(
+                title: Text(
+                  'Favorites',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Jost',
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (ctx) => const FavoriteScreen()));
+                },
+              ),
+            ListTile(
+              leading: isAdmin
+                  ? Icon(
+                      Icons.logout,
+                      color: Theme.of(context).primaryColor,
+                    )
+                  : null,
+              title: Text(
+                'Logout',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -265,235 +534,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Theme.of(context).primaryColor,
                 ),
               ),
+              onTap: logout,
             ),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'On Wi-fi',
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              subtitle: Text(
-                'Device must be connected to a Wifi-network.',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).primaryColor,
-                    fontFamily: 'Jost'),
-              ),
-              trailing: Checkbox(
-                value: onWifi,
-                fillColor: isAutoChange
-                    ? MaterialStatePropertyAll<Color>(
-                        Theme.of(context).primaryColor,
-                      )
-                    : const MaterialStatePropertyAll<Color>(grey),
-                checkColor: Theme.of(context).scaffoldBackgroundColor,
-                onChanged: isAutoChange
-                    ? (value) {
-                        setState(() {
-                          onWifi = value!;
-                        });
-                        PreferenceUtils.setBool('onWifi', onWifi);
-                        autoChangeWallpaper();
-                      }
-                    : null,
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            ),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Charging',
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              subtitle: Text(
-                'Device must be connected to a power source.',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).primaryColor,
-                    fontFamily: 'Jost'),
-              ),
-              trailing: Checkbox(
-                fillColor: isAutoChange
-                    ? MaterialStatePropertyAll<Color>(
-                        Theme.of(context).primaryColor,
-                      )
-                    : const MaterialStatePropertyAll<Color>(grey),
-                checkColor: Theme.of(context).scaffoldBackgroundColor,
-                // checkColor: colorTheme,
-                value: charging,
-                onChanged: isAutoChange
-                    ? (value) {
-                        setState(() {
-                          charging = value!;
-                        });
-                        PreferenceUtils.setBool('charging', charging);
-                        autoChangeWallpaper();
-                      }
-                    : null,
-              ),
-            ),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Idle',
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              subtitle: Text(
-                'Device must be inactive.',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).primaryColor,
-                    fontFamily: 'Jost'),
-              ),
-              trailing: Checkbox(
-                value: idle,
-                fillColor: isAutoChange
-                    ? MaterialStatePropertyAll<Color>(
-                        Theme.of(context).primaryColor,
-                      )
-                    : const MaterialStatePropertyAll<Color>(grey),
-                checkColor: Theme.of(context).scaffoldBackgroundColor,
-                onChanged: isAutoChange
-                    ? (value) {
-                        setState(() {
-                          idle = value!;
-                        });
-                        PreferenceUtils.setBool('idle', idle);
-                        autoChangeWallpaper();
-                      }
-                    : null,
-              ),
-            ),
-          if (!isAdmin) const Divider(),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Options',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Jost',
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-            ),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Interval',
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              subtitle: Text(
-                'Each wallpaper will last for $interval',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).primaryColor,
-                    fontFamily: 'Jost'),
-              ),
-              onTap: showIntervalOptions,
-            ),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Screen',
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              subtitle: Text(
-                screen,
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).primaryColor,
-                    fontFamily: 'Jost'),
-              ),
-              onTap: showScreenOptions,
-            ),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Source',
-                style: TextStyle(
-                  fontFamily: 'Jost',
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              subtitle: Text(
-                source,
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).primaryColor,
-                    fontFamily: 'Jost'),
-              ),
-              onTap: showSourceOptions,
-            ),
-          ListTile(
-            title: Text(
-              'Theme',
-              style: TextStyle(
-                fontFamily: 'Jost',
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-            subtitle: Text(
-              theme,
-              style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).primaryColor,
-                  fontFamily: 'Jost'),
-            ),
-            onTap: () => showThemeOptions(),
-          ),
-          if (!isAdmin) const Divider(),
-          if (!isAdmin)
-            ListTile(
-              title: Text(
-                'Favorites',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Jost',
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              onTap: () {
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (ctx) => const FavoriteScreen()));
-              },
-            ),
-          ListTile(
-            title: Text(
-              'Logout',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Jost',
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-            onTap: logout,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -510,11 +554,17 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
               TextButton(
                   onPressed: () async {
+                    setState(() {
+                      isLoading = true;
+                    });
                     await AuthHelper().signOut().then((val) {
                       print('signed out');
                       print(AuthHelper().user);
                       Navigator.pushReplacement(context,
                           MaterialPageRoute(builder: (ctx) => const SignInScreen()));
+                    });
+                    setState(() {
+                      isLoading = false;
                     });
                   },
                   child: Text(
@@ -522,15 +572,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontFamily: 'Jost',
                       color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.w500,
                     ),
                   )),
               TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text(
+                  child: Text(
                     'Cancel',
-                    style: TextStyle(fontFamily: 'Jost'),
+                    style: TextStyle(
+                        fontFamily: 'Jost', color: Theme.of(context).primaryColor),
                   )),
             ],
           );
@@ -572,7 +624,7 @@ class _HomeScreenState extends State<HomeScreen> {
     autoChangeWallpaper();
   }
 
-  getAutoChange() async {
+  getAutoChange() {
     isAutoChange = PreferenceUtils.getBool('isAutoChanges', false);
     setState(() {});
   }
@@ -599,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   autoChangeWallpaper() async {
-    await getAutoChange();
+    getAutoChange();
     print(isAutoChange);
     if (isAutoChange == false) {
       print('task cancelled');
@@ -652,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           'interval', value.toString().toLowerCase());
                     });
                     getDuration();
-                    if (isAutoChange) autoChangeWallpaper();
+                    if (isAutoChange ?? false) autoChangeWallpaper();
                     Navigator.pop(context);
                   });
             }),
@@ -723,7 +775,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         });
     setState(() {});
-    if (isAutoChange) autoChangeWallpaper();
+    if (isAutoChange ?? false) autoChangeWallpaper();
   }
 
   Future<void> showSourceOptions() async {
@@ -777,7 +829,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         });
     setState(() {});
-    if (isAutoChange) autoChangeWallpaper();
+    if (isAutoChange ?? false) autoChangeWallpaper();
   }
 
   Future<void> showThemeOptions() async {

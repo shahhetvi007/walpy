@@ -26,6 +26,11 @@ class CategoryTile extends StatelessWidget {
                           height: 50,
                           width: 100,
                           fit: BoxFit.cover,
+                          errorBuilder: (BuildContext context, Object exception,
+                              StackTrace? stackTrace) {
+                            return const Image(
+                                image: AssetImage('assets/images/placeholder.jpeg'));
+                          },
                         ),
                       ),
                       Container(

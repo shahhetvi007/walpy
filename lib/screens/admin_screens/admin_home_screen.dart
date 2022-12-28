@@ -20,6 +20,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   final ImagePicker imagePicker = ImagePicker();
   List<XFile> imageFileList = [];
   bool isLoading = false;
+  bool isButtonEnabled = false;
 
   @override
   void initState() {
@@ -32,7 +33,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
-        // iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -41,7 +41,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             Container(
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                // gradient: primaryGradient,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Container(
@@ -51,6 +50,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   keyboardType: TextInputType.text,
                   textCapitalization: TextCapitalization.sentences,
                   style: const TextStyle(fontFamily: 'Jost'),
+                  onChanged: (val) {
+                    print(val);
+                    if ((val.isNotEmpty || val != '') && imageFileList.isNotEmpty) {
+                      isButtonEnabled = true;
+                    } else {
+                      isButtonEnabled = false;
+                    }
+                    setState(() {});
+                  },
                   decoration: InputDecoration(
                     labelText: 'Category',
                     hintText: 'Enter category',
@@ -103,24 +111,26 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         }),
                   ),
             GestureDetector(
-              onTap: () async {
-                setState(() {
-                  isLoading = true;
-                });
-                await FirebaseHelper()
-                    .uploadImages(imageFileList, categoryController.text)
-                    .then((value) {
-                  setState(() {
-                    isLoading = false;
-                    categoryController.text = '';
-                    imageFileList = [];
-                  });
-                });
-              },
+              onTap: isButtonEnabled
+                  ? () async {
+                      setState(() {
+                        isLoading = true;
+                      });
+                      await FirebaseHelper()
+                          .uploadImages(imageFileList, categoryController.text)
+                          .then((value) {
+                        setState(() {
+                          isLoading = false;
+                          categoryController.text = '';
+                          imageFileList = [];
+                        });
+                      });
+                    }
+                  : null,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).primaryColor,
+                  color: isButtonEnabled ? Theme.of(context).primaryColor : grey,
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 child: Text(
@@ -143,6 +153,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final List<XFile> selectedImages = await imagePicker.pickMultiImage();
     if (selectedImages.isNotEmpty) {
       imageFileList.addAll(selectedImages);
+    }
+    if ((categoryController.text.isNotEmpty || categoryController.text != '') &&
+        imageFileList.isNotEmpty) {
+      isButtonEnabled = true;
+    } else {
+      isButtonEnabled = false;
     }
     setState(() {});
   }

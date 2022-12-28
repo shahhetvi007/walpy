@@ -85,7 +85,7 @@ class _DetailScreenState extends State<DetailScreen> {
       await WallpaperManager.setWallpaperFromFile(file.path, selected!);
       Fluttertoast.showToast(msg: 'Wallpaper changed');
     } on PlatformException {
-      false;
+      print('exception');
     }
     // If the widget was removed from the tree while the asynchronous platform
     // message was in flight, we want to discard the reply rather than calling
@@ -120,6 +120,6 @@ class _DetailScreenState extends State<DetailScreen> {
             ],
           );
         });
-    setState(() {});
+    // setState(() {});
   }
 }
