@@ -37,4 +37,9 @@ class PreferenceUtils {
     var prefs = await _instance;
     return prefs.setInt(key, value);
   }
+
+  static clear() async {
+    var prefs = await _instance;
+    prefs.clear();
+  }
 }

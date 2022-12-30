@@ -58,10 +58,11 @@ class AuthHelper {
     final DocumentSnapshot ref =
         await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     bool isAdmin = ref.get('isAdmin');
-    PreferenceUtils.setBool('isAdmin', isAdmin);
+    await PreferenceUtils.setBool('isAdmin', isAdmin);
   }
 
   signOut() async {
+    PreferenceUtils.clear();
     return await _auth.signOut();
   }
 }

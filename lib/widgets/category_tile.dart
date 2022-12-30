@@ -29,7 +29,7 @@ class CategoryTile extends StatelessWidget {
                           errorBuilder: (BuildContext context, Object exception,
                               StackTrace? stackTrace) {
                             return const Image(
-                                image: AssetImage('assets/images/placeholder.jpeg'));
+                                image: AssetImage('assets/images/acc_placeholder.jpeg'));
                           },
                         ),
                       ),

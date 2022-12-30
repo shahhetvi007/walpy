@@ -46,7 +46,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                         childAspectRatio: itemWidth / itemHeight,
                       ),
                       itemBuilder: (ctx, index) {
-                        return GridItem(snapshot.data.docs[index]['url']);
+                        RegExp regExp = RegExp(r'.+(\/|%2F)(.+)\?.+');
+                        var matches = regExp.allMatches(snapshot.data.docs[index]['url']);
+                        var match = matches.elementAt(0);
+                        String filename = Uri.decodeFull(match.group(2)!);
+                        return GridItem(snapshot.data.docs[index]['url'], filename);
                       })
                   : const Center(child: CircularProgressIndicator());
             }),
